@@ -1,0 +1,233 @@
+﻿<Window x:Class="Pixiv_Nginx_GUI.FirstUse"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:local="clr-namespace:Pixiv_Nginx_GUI"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        Title="初次使用配置" Height="550" Width="980" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowStyle="None">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.Background>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/bkg2.png"/>
+        </Grid.Background>
+        <Border Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="1,0">
+                    <GradientStop Color="#FFCE00FF"/>
+                    <GradientStop Color="#FF0057CC" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <hc:StepBar Grid.Row="0" x:Name="stepbar" Height="Auto" Margin="10,10,10,5">
+                <hc:StepBarItem Content="下载&#x000A;Pixiv-Nginx&#x000A;项目文件并解压" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
+                    <hc:StepBarItem.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FFCE00FF"/>
+                            <GradientStop Color="#FF0057CC" Offset="1"/>
+                        </LinearGradientBrush>
+                    </hc:StepBarItem.Foreground>
+                </hc:StepBarItem>
+                <hc:StepBarItem Content="安装&#x000A;根证书文件" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
+                    <hc:StepBarItem.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FFCE00FF"/>
+                            <GradientStop Color="#FF0057CC" Offset="1"/>
+                        </LinearGradientBrush>
+                    </hc:StepBarItem.Foreground>
+                </hc:StepBarItem>
+                <hc:StepBarItem Content="修改hosts &#x000A;并刷新DNS缓存" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
+                    <hc:StepBarItem.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FFCE00FF"/>
+                            <GradientStop Color="#FF0057CC" Offset="1"/>
+                        </LinearGradientBrush>
+                    </hc:StepBarItem.Foreground>
+                </hc:StepBarItem>
+                <hc:StepBarItem Content="完成&#x000A;部署" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
+                    <hc:StepBarItem.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FFCE00FF"/>
+                            <GradientStop Color="#FF0057CC" Offset="1"/>
+                        </LinearGradientBrush>
+                    </hc:StepBarItem.Foreground>
+                </hc:StepBarItem>
+            </hc:StepBar>
+        </Border>
+        <Border x:Name="WelcomePage" Visibility="Visible" Grid.Row="1" Margin="20,0,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF00FFED"/>
+                    <GradientStop Color="#FF00FF9C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <StackPanel>
+                <TextBlock Margin="20,20,20,10" TextWrapping="Wrap" Text="欢迎使用 &#x000A;Pixiv-Nginx 自动部署向导" FontSize="36" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                    <TextBlock.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FF00ACB9"/>
+                            <GradientStop Color="#FF4EFF00" Offset="1"/>
+                        </LinearGradientBrush>
+                    </TextBlock.Foreground>
+                </TextBlock>
+                <TextBlock Margin="20,0,20,10" TextWrapping="Wrap" Text="点击“下一步”按钮以开始部署，部署过程中可随时通过点击“取消”按钮来还原所有修改。 &#x000A;部署过程中请注意阅读本窗口显示的提示。 &#x000A;如遇到程序Bug，请提交issue至 &#x000A;https://github.com/racpast/Pixiv-Nginx-GUI" FontSize="32" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                    <TextBlock.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FF3B35FF"/>
+                            <GradientStop Color="#FF01FFCB" Offset="1"/>
+                        </LinearGradientBrush>
+                    </TextBlock.Foreground>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="APage" Visibility="Hidden" Grid.Row="1" Margin="20,0,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF00FFED"/>
+                    <GradientStop Color="#FF00FF9C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Grid>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="DownloadText" Margin="50,20,50,10" TextWrapping="Wrap" Text="下载文件(0%)" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF2CF0FF"/>
+                                <GradientStop Color="#FF4EFF00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" Margin="50,0,50,10" Height="25" FontWeight="Bold" FontFamily="{StaticResource AaManYuShouXieTi}" FontSize="16" Background="#B2EEEEEE">
+                        <ProgressBar.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#B2326CF3"/>
+                                <GradientStop Color="#B200E2FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </ProgressBar.Foreground>
+                    </ProgressBar>
+                    <Button x:Name="RetryBtn" IsEnabled="False" Click="RetryBtn_Click" Margin="50,0,50,0" Height="30" HorizontalAlignment="Stretch" Content="重试（下载失败或超时是正常现象 QAQ）" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
+                    <Button x:Name="ChooseBtn" IsEnabled="False" Click="ChooseBtn_Click" Margin="50,10,50,0" Height="30" HorizontalAlignment="Stretch" Content="选择本地文件（如果实在不行可以手动下载）" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
+                    <TextBlock Margin="50,30,50,10" x:Name="UnzipText" TextWrapping="Wrap" Text="等待解压文件" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FFFF3FEE"/>
+                                <GradientStop Color="#FF5998FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border x:Name="BPage" Visibility="Hidden" Grid.Row="1" Margin="20,0,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF00FFED"/>
+                    <GradientStop Color="#FF00FF9C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <ScrollViewer>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Margin="50,20,50,10" TextWrapping="Wrap" Text="我们会先移除已存在的证书，再安装新证书。&#x000A;当弹出如下图所示窗口时，请点击“是(Y)”" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF2CF0FF"/>
+                                <GradientStop Color="#FF4EFF00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <Image Source="/CerWarn.png" Stretch="UniformToFill" Width="600"/>
+                    <TextBlock Margin="50,10,50,10" TextWrapping="Wrap" Text="注意：如果遇到浏览器显示网站不可信任，这时即使你点了信任，网页内的图片等内容还是可能被浏览器阻止，最好的解决办法是保证证书安装成功。" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FFFF01E9"/>
+                                <GradientStop Color="#FF5998FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Border x:Name="CPage" Visibility="Hidden" Grid.Row="1" Margin="20,0,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF00FFED"/>
+                    <GradientStop Color="#FF00FF9C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <ScrollViewer>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Margin="50,10,50,10" TextWrapping="Wrap" Text="修改hosts" TextAlignment="Center" FontSize="32" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF2CF0FF"/>
+                                <GradientStop Color="#FF4EFF00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock Margin="50,0,50,0" TextWrapping="Wrap" Text="注意：点击“替换”会直接对原来的hosts文件进行替换，您之前所做过的特殊更改将会失效。&#x000A;如果您确定hosts文件与该项目的hosts文件不冲突（没有做过相关修改），那么请点击“追加”将文件内容直接追加到hosts。原来的hosts文件会留下一个名为hosts.bak的副本。" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF37CDFF"/>
+                                <GradientStop Color="#FFFDFF00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="Replacehosts" Margin="20,0,10,10" Height="30" Click="Replacehosts_Click" HorizontalAlignment="Stretch" Content="替换" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="1" x:Name="Addhosts" Margin="20,0,10,10" Height="30" Click="Addhosts_Click" HorizontalAlignment="Stretch" Content="追加" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Border x:Name="DPage" Visibility="Hidden" Grid.Row="1" Margin="20,0,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF00FFED"/>
+                    <GradientStop Color="#FF00FF9C" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <ScrollViewer>
+                <StackPanel>
+                    <TextBlock Margin="20,20,20,10" TextWrapping="Wrap" Text="Pixiv-Nginx 已部署完成" FontSize="36" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF45FFF2"/>
+                                <GradientStop Color="#FF4EFF00" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <TextBlock Margin="20,0,20,10" TextWrapping="Wrap" Text="点击“下一步”按钮以完成部署过程。 &#x000A;注意：&#x000A;完成部署后，在本程序主窗口点击“启动”按钮， &#x000A;即可尝试访问 Pixiv 。在启动 Nginx 时如果弹出以下窗口，请点击“允许访问”。" FontSize="32" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush EndPoint="1,0">
+                                <GradientStop Color="#FF3BAAFF"/>
+                                <GradientStop Color="#FF01FFCB" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                    <Image Source="/nginxwarn.png" Stretch="UniformToFill" Width="600"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="CancelBtn" Margin="20,0,10,10" Height="30" Click="CancelBtn_Click" HorizontalAlignment="Stretch" Content="取消部署" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFD40000" BorderBrush="#FFD40000" VerticalContentAlignment="Center"/>
+            <Button x:Name="NextBtn" Grid.Column="1" Height="30" Margin="10,0,20,10" Click="NextBtn_Click" HorizontalAlignment="Stretch" Content="下一步" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Window>

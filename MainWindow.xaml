@@ -1,0 +1,138 @@
+﻿<Window x:Class="Pixiv_Nginx_GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:local="clr-namespace:Pixiv_Nginx_GUI"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        Title="Pixiv-Nginx-GUI" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowStyle="None">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid.Background>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/bkg.png"/>
+        </Grid.Background>
+        <Border Grid.Row="0" Margin="20,10,20,0"  Background="#70FFFFFF" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="5,5,5,5">
+            <Border.BorderBrush>
+                <LinearGradientBrush EndPoint="1,0">
+                    <GradientStop Color="#FFCE00FF"/>
+                    <GradientStop Color="#FF0057CC" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <TextBlock Margin="5" TextWrapping="Wrap" Text="Pixiv-Nginx 部署工具" FontSize="21" Foreground="#FF00FFE2" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" TextAlignment="Center"/>
+        </Border>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <RichTextBox Grid.Column="0" ScrollViewer.HorizontalScrollBarVisibility="Visible" Margin="20,10,10,20" Background="#70FFFFFF" BorderBrush="White" IsReadOnly="True" FontFamily="{StaticResource AaManYuShouXieTi}">
+                <FlowDocument>
+                    <Paragraph TextAlignment="Center">
+                        <Span FontSize="25" Foreground="#FFCE00FF">
+                            <Run Text="说 明" FontWeight="Bold" />
+                        </Span>
+                    </Paragraph>
+                    <Paragraph TextAlignment="Left">
+                        <Span FontSize="18" Foreground="#FF8738FF">
+                            <Run Text="服务器名称指示（英语：Server Name Indication，缩写：SNI）是TLS的一个扩展协议，在该协议下，在握手过程开始时客户端告诉它正在连接的服务器要连接的主机名称。" />
+                        </Span>
+                    </Paragraph>
+                    <Paragraph TextAlignment="Left">
+                        <Span FontSize="18" Foreground="#FFFF38DC">
+                            <Run Text="域前置(Domain Fronting)技术，就是利用有的服务器不验证SNI的这一特点，给GFW和服务器一个假的SNI。因为GFW没有私钥，只能通过SNI和IP判断你要访问的网站，而假的SNI就能欺骗GFW。" />
+                        </Span>
+                    </Paragraph>
+                    <Paragraph TextAlignment="Left" FontSize="18">
+                        <Run Foreground="#FF3C75FF" TextDecorations="Underline" FontWeight="Bold">https://github.com/mashirozx/Pixiv-Nginx</Run>
+                        <Span Foreground="#FFC74DE4">
+                            <Run Text="就是一个通过这种方式恢复国内访问Pixiv的已经完整实现的开源项目，利用了Nginx反向代理时不支持SNI达到目的。"/>
+                        </Span>
+                    </Paragraph>
+                    <Paragraph TextAlignment="Left" FontSize="18">
+                        <Span Foreground="#FF31EF83">
+                            <Run Text="本程序实现了该项目的自动化部署，旨在为没有相关基础但需要使用该项目的人士提供一个更易于使用的方案。" FontWeight="Bold"/>
+                        </Span>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+            <TabControl Grid.Column="1" x:Name="tabcontrol" Margin="10,10,20,20" Style="{StaticResource TabControlInLine}" FontFamily="{StaticResource AaManYuShouXieTi}" Background="Transparent" BorderBrush="White" FontSize="14">
+                <TabItem Header="主页" IsSelected="True" Background="#70FFFFFF">
+                    <ScrollViewer>
+                        <StackPanel Background="#70FFFFFF">
+                            <TextBlock Margin="20,10,20,10" TextWrapping="Wrap" Text="欢迎使用 &#x000A;Pixiv-Nginx 部署工具！" FontSize="22" Foreground="#FF00C303" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold"/>
+                            <TextBlock Margin="20,0,20,10" TextWrapping="Wrap" Text="如果您是第一次使用 Pixiv-Nginx ，请单击下方按钮进入自动部署流程。" FontSize="18" Foreground="#FF4595FF" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold"/>
+                            <Button x:Name="AutoConfigBtn" Click="AutoConfigBtn_Click" Height="30" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="开始自动部署"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                            <TextBlock x:Name="NginxST" Margin="20,0,20,10" TextWrapping="Wrap" Text="当前 Nginx 状态：已停止" FontSize="18" Foreground="Red" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Button x:Name="RefreshBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="0" Click="RefreshBtn_Click" Margin="10,0,5,10" Content="刷新状态"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                                <Button x:Name="StartBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="1" Click="StartBtn_Click" Margin="5,0,5,10" Content="启动"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                                <Button x:Name="StopBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="2" Click="StopBtn_Click" Margin="5,0,10,10" Content="停止"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                                <Button x:Name="CheckConfBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="0" Grid.Row="1" Click="CheckConfBtn_Click" Margin="10,0,5,10" Content="检查配置"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                                <Button x:Name="ReloadConfBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="1" Grid.Row="1" Click="ReloadConfBtn_Click" Margin="5,0,5,10" Content="重载配置"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                                <Button x:Name="VersionBtn" Height="30"  HorizontalAlignment="Stretch" Grid.Column="2" Grid.Row="1" Click="VersionBtn_Click" Margin="5,0,10,10" Content="查看版本"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="SetStartBtn" Click="SetStartBtn_Click" Height="30"  Margin="10,0,5,10" HorizontalAlignment="Stretch" Content="加入开机自动启动"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
+                                <Button x:Name="DelStartBtn" Height="30" Grid.Column="1" Click="DelStartBtn_Click" Margin="5,0,10,10" HorizontalAlignment="Stretch" Content="停止开机自动启动"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
+                            </Grid>
+                            <Button x:Name="ExitBtn" Click="ExitBtn_Click" Height="30" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="退出工具"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFFF3C3C" BorderBrush="#FFFF3C3C" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="更新" Background="#70FFFFFF">
+                    <ScrollViewer>
+                        <StackPanel Background="#70FFFFFF">
+                            <TextBlock x:Name="VersionInfo" Margin="20,10,20,10" TextWrapping="Wrap" Text="当前 Pixiv-Nginx 版本 Commit 时间(GMT)：&#x000A;2024-10-18 04:19:55" FontSize="22" Foreground="#FF04ABD6" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <Button x:Name="CheckUpdateBtn" Click="CheckUpdateBtn_Click" Height="30" Margin="10,0,5,10" HorizontalAlignment="Stretch" Content="检查更新"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
+                                <Button x:Name="UpdateBtn" IsEnabled="False" Grid.Column="1" Click="UpdateBtn_Click" Height="30" Margin="5,0,10,10" HorizontalAlignment="Stretch" Content="更新至最新版本"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
+                            </Grid>
+                            <Button x:Name="ChooseUpdateBtn" Click="ChooseUpdateBtn_Click" Height="30" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="选择本地压缩包更新"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
+                            <hc:TextBox x:Name="UpdateLogTb" MaxLength="2000" TextChanged="UpdateLogTb_TextChanged" Margin="10,0,10,10" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="#70FFFFFF" IsReadOnly="True" Height="200" FontFamily="Microsoft YaHei"></hc:TextBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="日志" Background="#70FFFFFF">
+                    <ScrollViewer>
+                        <StackPanel Background="#70FFFFFF">
+                            <hc:ComboBox x:Name="LogCombo" SelectionChanged="LogCombo_SelectionChanged" Background="#70FFFFFF" Margin="10">
+                                <ComboBoxItem>access.log</ComboBoxItem>
+                                <ComboBoxItem>error.log</ComboBoxItem>
+                                <ComboBoxItem>E-hentai-access.log</ComboBoxItem>
+                                <ComboBoxItem>E-hentai-error.log</ComboBoxItem>
+                            </hc:ComboBox>
+                            <hc:TextBox x:Name="LogTb" Margin="10,0,10,10" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="#70FFFFFF" IsReadOnly="True" Height="250" FontFamily="Microsoft YaHei UI"></hc:TextBox>
+                            <Button x:Name="DelLogBtn" Click="DelLogBtn_Click" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="清理所有日志(0.00MB)"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
+</Window>
