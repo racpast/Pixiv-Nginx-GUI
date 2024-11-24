@@ -34,5 +34,17 @@ namespace Pixiv_Nginx_GUI.Properties {
                 this["CurrentVersionCommitDate"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsFirst {
+            get {
+                return ((bool)(this["IsFirst"]));
+            }
+            set {
+                this["IsFirst"] = value;
+            }
+        }
     }
 }

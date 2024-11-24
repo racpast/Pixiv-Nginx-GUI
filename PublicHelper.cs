@@ -73,14 +73,12 @@ namespace Pixiv_Nginx_GUI
             UnZip(zipedFile, strDirectory, true);
         }
 
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(10)
+        };
 
-        public static async Task DownloadFileAsync(
-            string fileUrl,
-            string destinationPath,
-            IProgress<double> progress = null,
-            TimeSpan progressTimeout = default,
-            CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task DownloadFileAsync(string fileUrl, string destinationPath, IProgress<double> progress = null, TimeSpan progressTimeout = default, CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
@@ -94,7 +92,6 @@ namespace Pixiv_Nginx_GUI
                 long totalBytes = contentLength.Value;
                 long downloadedBytes = 0;
                 DateTime lastProgressUpdate = DateTime.UtcNow;
-
                 using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 {
@@ -109,11 +106,14 @@ namespace Pixiv_Nginx_GUI
                         {
                             double progressPercentage = (double)downloadedBytes / totalBytes * 100;
                             progress.Report(progressPercentage);
-                            lastProgressUpdate = DateTime.UtcNow;
                         }
-                        if (progress != null && DateTime.UtcNow - lastProgressUpdate > progressTimeout)
+                        if (progress != null && (DateTime.UtcNow - lastProgressUpdate).TotalMilliseconds > progressTimeout.TotalMilliseconds)
                         {
                             throw new TimeoutException("下载进度在指定时间内没有变化，操作超时。");
+                        }
+                        if (bytesRead > 0)
+                        {
+                            lastProgressUpdate = DateTime.UtcNow;
                         }
                         cancellationToken.ThrowIfCancellationRequested();
                     }

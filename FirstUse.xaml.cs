@@ -1,11 +1,12 @@
-﻿using System;
-using System.Windows;
-using System.Security.Cryptography.X509Certificates;
-using System.IO;
-using System.Threading;
+﻿using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
-using Microsoft.Win32;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace Pixiv_Nginx_GUI
 {
@@ -21,9 +22,111 @@ namespace Pixiv_Nginx_GUI
 
         public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
 
-        string CERFile = Path.Combine(NginxDirectory, "ca.cer");
+        public async Task DownloadZip()
+        {
+            string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
+            string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
+            CancelBtn.IsEnabled = false;
+            NextBtn.IsEnabled = false;
+            CancellationTokenSource cts = new CancellationTokenSource();
+            TimeSpan progressTimeout = TimeSpan.FromSeconds(10);
+            try
+            {
+                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
+                JObject repodata = JObject.Parse(RepoInfo);
+                string CommitInfoURL = repodata["object"]["url"].ToString();
+                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
+                JObject commitdata = JObject.Parse(CommitInfo);
+                string LCommitDT = commitdata["committer"]["date"].ToString();
+                await PublicHelper.DownloadFileAsync(fileUrl,
+                                       destinationPath,
+                                       new Progress<double>(progress =>
+                                       {
+                                           Dispatcher.Invoke(() =>
+                                           {
+                                               DownloadText.Text = $"下载中({progress:F2}%)";
+                                               DownloadProgress.Value = Math.Round(progress);
+                                           });
+                                       }),
+                                       progressTimeout,
+                                       cts.Token);
+                DownloadText.Text = "文件下载完成！";
+                Directory.Delete(NginxDirectory, true);
+                UnzipText.Text = "解压文件中...";
+                await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                UnzipText.Text = "文件解压完成！";
+                Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(LCommitDT).ToString();
+                Properties.Settings.Default.Save();
+                NextBtn.IsEnabled = true;
+            }
+            catch (OperationCanceledException)
+            {
+                HandyControl.Controls.MessageBox.Show("文件下载超时，请重试！", "下载", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.MessageBox.Show($"出现异常：\r\n{ex.Message}", "异常", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (File.Exists(destinationPath))
+                {
+                    File.Delete(destinationPath);
+                }
+                cts.Dispose();
+                CancelBtn.IsEnabled = true;
+                ChooseBtn.IsEnabled = true;
+                RetryBtn.IsEnabled = true;
+            }
+        }
 
-        string hostsFile = Path.Combine(NginxDirectory, "hosts");
+        public void InstallCertificate()
+        {
+            X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            store.Open(OpenFlags.MaxAllowed);
+            X509Certificate2Collection collection = store.Certificates;
+            string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+            X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
+            try
+            {
+                if (fcollection != null)
+                {
+                    if (fcollection.Count > 0)
+                    {
+                        store.RemoveRange(fcollection);
+                        if (File.Exists(CERFile))
+                        {
+                            X509Certificate2 x509 = new X509Certificate2(CERFile);
+                            store.Add(x509);
+                            NextBtn.IsEnabled = true;
+                        }
+                    }
+                    else
+                    {
+                        if (File.Exists(CERFile))
+                        {
+                            X509Certificate2 x509 = new X509Certificate2(CERFile);
+                            store.Add(x509);
+                            NextBtn.IsEnabled = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.MessageBox.Show($"安装证书失败！\r\n{ex.Message}", "安装证书", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                store.Close();
+                CancelBtn.IsEnabled = true;
+            }
+
+        }
+
+        readonly string CERFile = Path.Combine(NginxDirectory, "ca.cer");
+
+        readonly string hostsFile = Path.Combine(NginxDirectory, "hosts");
 
         public void CheckFiles()
         {
@@ -40,9 +143,9 @@ namespace Pixiv_Nginx_GUI
             }
         }
 
-        public void flushdns()
+        public void Flushdns()
         {
-            string command = "ipconfig /flushdns & pause";
+            string command = "ipconfig /flushdns & pause & exit";
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
@@ -75,61 +178,7 @@ namespace Pixiv_Nginx_GUI
                 {
                     WelcomePage.Visibility = Visibility.Hidden;
                     APage.Visibility = Visibility.Visible;
-                    string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
-                    string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
-                    CancelBtn.IsEnabled = false;
-                    NextBtn.IsEnabled = false;
-                    CancellationTokenSource cts = new CancellationTokenSource();
-                    TimeSpan progressTimeout = TimeSpan.FromSeconds(30);
-                    try
-                    {
-                        string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
-                        JObject repodata = JObject.Parse(RepoInfo);
-                        string CommitInfoURL = repodata["object"]["url"].ToString();
-                        string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
-                        JObject commitdata = JObject.Parse(CommitInfo);
-                        string LCommitDT = commitdata["committer"]["date"].ToString();
-                        await PublicHelper.DownloadFileAsync(fileUrl,
-                                               destinationPath,
-                                               new Progress<double>(progress =>
-                                               {
-                                                   Dispatcher.Invoke(() =>
-                                                   {
-                                                       DownloadText.Text = $"下载中({progress:F2}%)";
-                                                       DownloadProgress.Value = Math.Round(progress);
-                                                   });
-                                               }),
-                                               progressTimeout,
-                                               cts.Token);
-                        DownloadText.Text = $"文件下载完成！";
-                        Directory.Delete(NginxDirectory, true);
-                        UnzipText.Text = "解压文件中...";
-                        await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
-                        UnzipText.Text = "文件解压完成！";
-                        Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(LCommitDT).ToString();
-                        Properties.Settings.Default.Save();
-                        NextBtn.IsEnabled = true;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        HandyControl.Controls.MessageBox.Show("文件下载超时，请重试！", "下载", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                        RetryBtn.IsEnabled = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        HandyControl.Controls.MessageBox.Show($"出现异常：\r\n{ex}", "异常", MessageBoxButton.OK, MessageBoxImage.Error);
-                        RetryBtn.IsEnabled = true;
-                        ChooseBtn.IsEnabled = true;
-                    }
-                    finally
-                    {
-                        if (File.Exists(destinationPath))
-                        {
-                            File.Delete(destinationPath);
-                        }
-                        cts.Dispose();
-                        CancelBtn.IsEnabled = true;
-                    }
+                    await DownloadZip();
                 }
                 else
                 {
@@ -138,61 +187,23 @@ namespace Pixiv_Nginx_GUI
                     stepbar.StepIndex++;
                     NextBtn.IsEnabled = false;
                     CancelBtn.IsEnabled = false;
-                    X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-                    store.Open(OpenFlags.MaxAllowed); 
-                    X509Certificate2Collection collection = store.Certificates;
-                    string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
-                    X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
-                    try
-                    {
-                        if (fcollection != null)
-                        {
-                            if (fcollection.Count > 0)
-                            {
-                                store.RemoveRange(fcollection);
-                                if (File.Exists(CERFile))
-                                {
-                                    X509Certificate2 x509 = new X509Certificate2(CERFile);
-                                    store.Add(x509);
-                                    NextBtn.IsEnabled = true;
-                                }
-                            }
-                        }
-                        if (fcollection != null && fcollection.Count == 0)
-                        {
-                            if (File.Exists(CERFile))
-                            {
-                                X509Certificate2 x509 = new X509Certificate2(CERFile);
-                                store.Add(x509);
-                                NextBtn.IsEnabled = true;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        HandyControl.Controls.MessageBox.Show($"安装证书失败！\r\n{ex.Message}", "安装证书", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    finally
-                    {
-                        store.Close();
-                        CancelBtn.IsEnabled = true;
-                    }
+                    InstallCertificate();
                 }
             }
             else if (stepbar.StepIndex == 1)
             {
                 BPage.Visibility = Visibility.Hidden;
                 CPage.Visibility = Visibility.Visible;
-                stepbar.StepIndex ++;
+                stepbar.StepIndex++;
                 NextBtn.IsEnabled = false;
-
-            }else if(stepbar.StepIndex == 2)
+            }
+            else if (stepbar.StepIndex == 2)
             {
                 CPage.Visibility = Visibility.Hidden;
                 DPage.Visibility = Visibility.Visible;
-                stepbar.StepIndex ++;
+                stepbar.StepIndex++;
             }
-            else if(stepbar.StepIndex == 3)
+            else if (stepbar.StepIndex == 3)
             {
                 this.Close();
                 Application.Current.MainWindow.Show();
@@ -227,11 +238,11 @@ namespace Pixiv_Nginx_GUI
             }
             try
             {
-                if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts")&&File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts.bak"))
+                if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts") && File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts.bak"))
                 {
                     File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts.bak", "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
                 }
-                flushdns();
+                Flushdns();
             }
             catch (IOException iox)
             {
@@ -255,7 +266,9 @@ namespace Pixiv_Nginx_GUI
                 {
                     File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
                 }
-                flushdns();
+                Flushdns();
+                Addhosts.IsEnabled = false;
+                Replacehosts.IsEnabled = false;
                 NextBtn.IsEnabled = true;
             }
             catch (IOException iox)
@@ -274,7 +287,9 @@ namespace Pixiv_Nginx_GUI
                 }
                 File.Delete("C:\\Windows\\System32\\drivers\\etc\\hosts");
                 File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
-                flushdns();
+                Flushdns();
+                Addhosts.IsEnabled = false;
+                Replacehosts.IsEnabled = false;
                 NextBtn.IsEnabled = true;
             }
             catch (IOException iox)
@@ -291,61 +306,8 @@ namespace Pixiv_Nginx_GUI
         private async void RetryBtn_Click(object sender, RoutedEventArgs e)
         {
             RetryBtn.IsEnabled = false;
-            string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
-            string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
-            CancelBtn.IsEnabled = false;
-            NextBtn.IsEnabled = false;
-            CancellationTokenSource cts = new CancellationTokenSource();
-            TimeSpan progressTimeout = TimeSpan.FromSeconds(30);
-            try
-            {
-                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
-                JObject repodata = JObject.Parse(RepoInfo);
-                string CommitInfoURL = repodata["object"]["url"].ToString();
-                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
-                JObject commitdata = JObject.Parse(CommitInfo);
-                string LCommitDT = commitdata["committer"]["date"].ToString();
-                await PublicHelper.DownloadFileAsync(fileUrl,
-                                       destinationPath,
-                                       new Progress<double>(progress =>
-                                       {
-                                           Dispatcher.Invoke(() =>
-                                           {
-                                               DownloadText.Text = $"下载中({progress:F2}%)";
-                                               DownloadProgress.Value = Math.Round(progress);
-                                           });
-                                       }),
-                                       progressTimeout,
-                                       cts.Token);
-                DownloadText.Text += $"文件下载完成\r\n";
-                Directory.Delete(NginxDirectory, true);
-                UnzipText.Text = "解压文件中...";
-                await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
-                UnzipText.Text = "文件解压完成！";
-                Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(LCommitDT).ToString();
-                Properties.Settings.Default.Save();
-                NextBtn.IsEnabled = true;
-            }
-            catch (OperationCanceledException)
-            {
-                HandyControl.Controls.MessageBox.Show("文件下载超时，请重试！", "下载", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                RetryBtn.IsEnabled = true;
-            }
-            catch (Exception ex)
-            {
-                HandyControl.Controls.MessageBox.Show($"出现异常：\r\n{ex}", "异常", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(0);
-            }
-            finally
-            {
-                if (File.Exists(destinationPath))
-                {
-                    File.Delete(destinationPath);
-                }
-                cts.Dispose();
-                CancelBtn.IsEnabled = true;
-                ChooseBtn.IsEnabled = true;
-            }
+            ChooseBtn.IsEnabled = false;
+            await DownloadZip();
         }
 
         private async void ChooseBtn_Click(object sender, RoutedEventArgs e)

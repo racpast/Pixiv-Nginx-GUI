@@ -1,15 +1,15 @@
-﻿using System;
-using System.IO;
+﻿using Microsoft.Win32;
+using Microsoft.Win32.TaskScheduler;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Threading;
-using System.Diagnostics;
-using Microsoft.Win32.TaskScheduler;
-using Newtonsoft.Json.Linq;
 using System.Windows.Threading;
-using Microsoft.Win32;
 
 namespace Pixiv_Nginx_GUI
 {
@@ -21,11 +21,15 @@ namespace Pixiv_Nginx_GUI
         public MainWindow()
         {
             InitializeComponent();
-            _logUpdateTimer = new DispatcherTimer();
-            _logUpdateTimer.Interval = TimeSpan.FromSeconds(5);
+            _logUpdateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
             _logUpdateTimer.Tick += LogUpdateTimer_Tick;
-            _NginxStUpdateTimer = new DispatcherTimer();
-            _NginxStUpdateTimer.Interval = TimeSpan.FromSeconds(5);
+            _NginxStUpdateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
             _NginxStUpdateTimer.Tick += NginxStUpdateTimer_Tick;
         }
 
@@ -54,9 +58,9 @@ namespace Pixiv_Nginx_GUI
             }
         }
 
-        private DispatcherTimer _logUpdateTimer;
+        private readonly DispatcherTimer _logUpdateTimer;
 
-        private DispatcherTimer _NginxStUpdateTimer;
+        private readonly DispatcherTimer _NginxStUpdateTimer;
 
         private string NewVersion;
 
@@ -64,25 +68,25 @@ namespace Pixiv_Nginx_GUI
 
         public static string dataDirectory = Path.Combine(currentDirectory, "data");
 
-        public static string NginxDirectory = Path.Combine(dataDirectory,"pixiv-nginx");
+        public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
 
-        string nginxPath = Path.Combine(NginxDirectory, "nginx.exe");
+        readonly string nginxPath = Path.Combine(NginxDirectory, "nginx.exe");
 
-        string nginxConfigFile = Path.Combine(NginxDirectory, "conf", "nginx.conf");
+        readonly string nginxConfigFile = Path.Combine(NginxDirectory, "conf", "nginx.conf");
 
-        string CERFile = Path.Combine(NginxDirectory, "ca.cer");
+        readonly string CERFile = Path.Combine(NginxDirectory, "ca.cer");
 
-        string hostsFile = Path.Combine(NginxDirectory, "hosts");
+        readonly string hostsFile = Path.Combine(NginxDirectory, "hosts");
 
         public static string nginxLogPath = Path.Combine(NginxDirectory, "logs");
 
-        string nginxLog1Path = Path.Combine(nginxLogPath, "access.log");
+        readonly string nginxLog1Path = Path.Combine(nginxLogPath, "access.log");
 
-        string nginxLog2Path = Path.Combine(nginxLogPath, "E-hentai-access.log");
+        readonly string nginxLog2Path = Path.Combine(nginxLogPath, "E-hentai-access.log");
 
-        string nginxLog3Path = Path.Combine(nginxLogPath, "E-hentai-error.log");
+        readonly string nginxLog3Path = Path.Combine(nginxLogPath, "E-hentai-error.log");
 
-        string nginxLog4Path = Path.Combine(nginxLogPath, "error.log");
+        readonly string nginxLog4Path = Path.Combine(nginxLogPath, "error.log");
 
         public void CheckFiles()
         {
@@ -96,7 +100,8 @@ namespace Pixiv_Nginx_GUI
             {
                 if (!File.Exists(filePath))
                 {
-                    HandyControl.Controls.MessageBox.Show($"检测到重要文件缺失：{System.IO.Path.GetFileName(filePath)}，请重新下载或通过手动安装压缩包来修复文件缺失！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    HandyControl.Controls.MessageBox.Show("检测到重要文件缺失，请重新下载或通过手动安装压缩包来修复文件缺失！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    break;
                 }
             }
             foreach (var filePath in LogfilePaths)
@@ -118,14 +123,13 @@ namespace Pixiv_Nginx_GUI
 
         public void UpdateLog()
         {
-            ComboBoxItem selectedItem = LogCombo.SelectedItem as ComboBoxItem;
-            if (selectedItem!=null)
+            if (LogCombo.SelectedItem is ComboBoxItem selectedItem)
             {
                 try
                 {
                     string selectedText = selectedItem.Content.ToString();
-                if (selectedText == "access.log")
-                {
+                    if (selectedText == "access.log")
+                    {
 
                         using (FileStream fileStream = new FileStream(nginxLog1Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         {
@@ -135,9 +139,9 @@ namespace Pixiv_Nginx_GUI
                             }
                         }
 
-                }
-                else if (selectedText == "E-hentai-access.log")
-                {
+                    }
+                    else if (selectedText == "E-hentai-access.log")
+                    {
                         using (FileStream fileStream = new FileStream(nginxLog2Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         {
                             using (StreamReader reader = new StreamReader(fileStream))
@@ -145,9 +149,9 @@ namespace Pixiv_Nginx_GUI
                                 LogTb.Text = reader.ReadToEnd();
                             }
                         }
-                }
-                else if (selectedText == "E-hentai-error.log")
-                {
+                    }
+                    else if (selectedText == "E-hentai-error.log")
+                    {
 
                         using (FileStream fileStream = new FileStream(nginxLog3Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         {
@@ -156,9 +160,9 @@ namespace Pixiv_Nginx_GUI
                                 LogTb.Text = reader.ReadToEnd();
                             }
                         }
-                }
-                else if (selectedText == "error.log")
-                {
+                    }
+                    else if (selectedText == "error.log")
+                    {
                         using (FileStream fileStream = new FileStream(nginxLog4Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         {
                             using (StreamReader reader = new StreamReader(fileStream))
@@ -166,7 +170,7 @@ namespace Pixiv_Nginx_GUI
                                 LogTb.Text = reader.ReadToEnd();
                             }
                         }
-                }
+                    }
                 }
                 catch (IOException ex)
                 {
@@ -216,7 +220,7 @@ namespace Pixiv_Nginx_GUI
                 FileInfo fileInfo = new FileInfo(filePath);
                 totalSizeInBytes += fileInfo.Length;
             }
-            double totalSizeInMB = Math.Round((double)totalSizeInBytes / (1024 * 1024),2); // 将字节转换为MB
+            double totalSizeInMB = Math.Round((double)totalSizeInBytes / (1024 * 1024), 2); // 将字节转换为MB
             return totalSizeInMB;
         }
 
@@ -229,7 +233,16 @@ namespace Pixiv_Nginx_GUI
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            CheckFiles();
+            if (Properties.Settings.Default.IsFirst)
+            {
+                AutoConfigBtn_Click(this, e);
+                Properties.Settings.Default.IsFirst = false;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                CheckFiles();
+            }
             UpdateNginxST();
             tabcontrol.SelectionChanged += TabControl_SelectionChanged;
             _NginxStUpdateTimer.Start();
@@ -283,7 +296,7 @@ namespace Pixiv_Nginx_GUI
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}","错误",MessageBoxButton.OK,MessageBoxImage.Error);
+                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -354,9 +367,9 @@ namespace Pixiv_Nginx_GUI
                     td.Actions.Add(execAction);
                     ts.RootFolder.RegisterTaskDefinition(taskName, td);
                 }
-                HandyControl.Controls.MessageBox.Show("成功设置 Nginx 为开机启动。","提示",MessageBoxButton.OK,MessageBoxImage.Information);
+                HandyControl.Controls.MessageBox.Show("成功设置 Nginx 为开机启动。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -559,7 +572,7 @@ namespace Pixiv_Nginx_GUI
             File.Delete(nginxLog3Path);
             File.Delete(nginxLog4Path);
             CheckFiles();
-            HandyControl.Controls.MessageBox.Show("日志清理完成！","清理日志",MessageBoxButton.OK,MessageBoxImage.Information);
+            HandyControl.Controls.MessageBox.Show("日志清理完成！", "清理日志", MessageBoxButton.OK, MessageBoxImage.Information);
             List<string> filePaths = new List<string> { nginxLog1Path, nginxLog2Path, nginxLog3Path, nginxLog4Path };
             DelLogBtn.Content = $"清理所有日志({GetTotalFileSizeInMB(filePaths)}MB)";
             LogTb.Text = "";
@@ -587,7 +600,7 @@ namespace Pixiv_Nginx_GUI
                     CheckFiles();
                     UpdateLog();
                     _logUpdateTimer.Start();
-                    _NginxStUpdateTimer.Stop(); 
+                    _NginxStUpdateTimer.Stop();
                     break;
                 case "主页":
                     UpdateNginxST();
