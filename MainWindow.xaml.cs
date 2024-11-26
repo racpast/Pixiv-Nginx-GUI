@@ -235,7 +235,13 @@ namespace Pixiv_Nginx_GUI
         private async void AutoConfigBtn_Click(object sender, RoutedEventArgs e)
         {
             await KillNginx();
-            PublicHelper.RenameDirectory(NginxDirectory,OldNginxDirectory);
+            try
+            {
+                PublicHelper.RenameDirectory(NginxDirectory, OldNginxDirectory);
+            }catch (Exception ex)
+            {
+                HandyControl.Controls.MessageBox.Show($"{ex.Message}\r\n请重试！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             FirstUse firstUse = new FirstUse();
             firstUse.Show();
             this.Hide();

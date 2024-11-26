@@ -58,6 +58,12 @@
                             <Run Text="本程序实现了该项目的自动化部署，旨在为没有相关基础但需要使用该项目的人士提供一个更易于使用的方案。" FontWeight="Bold"/>
                         </Span>
                     </Paragraph>
+                    <Paragraph TextAlignment="Left" FontSize="18">
+                        <Span Foreground="#FFC74DE4">
+                            <Run Text="项目地址："/>
+                        </Span>
+                        <Run Foreground="#FF3C75FF" TextDecorations="Underline" FontWeight="Bold">https://github.com/racpast/Pixiv-Nginx-GUI/</Run>
+                    </Paragraph>
                 </FlowDocument>
             </RichTextBox>
             <TabControl Grid.Column="1" x:Name="tabcontrol" Margin="10,10,20,20" Style="{StaticResource TabControlInLine}" FontFamily="{StaticResource AaManYuShouXieTi}" Background="Transparent" BorderBrush="White" FontSize="14">
