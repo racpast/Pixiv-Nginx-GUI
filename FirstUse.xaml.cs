@@ -209,7 +209,10 @@ namespace Pixiv_Nginx_GUI
                 {
                     Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(NewVersion).ToString();
                     Properties.Settings.Default.Save();
-                    Directory.Delete(OldNginxDirectory,true);
+                    if (Directory.Exists(OldNginxDirectory))
+                    {
+                        Directory.Delete(OldNginxDirectory, true);
+                    }
                     this.Close();
                     Application.Current.MainWindow.Show();
 
