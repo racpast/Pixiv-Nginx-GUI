@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.RightsManagement;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -15,17 +16,18 @@ namespace Pixiv_Nginx_GUI
     /// </summary>
     public partial class FirstUse : Window
     {
-
+        public string NewVersion;
+        public bool PreviousCERState;
         public static string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
         public static string dataDirectory = Path.Combine(currentDirectory, "data");
-
         public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
+        public static string OldNginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx.old");
+        public static string TempDirectory = Path.Combine(dataDirectory, "temp");
 
         public async Task DownloadZip()
         {
             string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
-            string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
+            string destinationPath = Path.Combine(TempDirectory, "Pixiv-Nginx-main.zip");
             CancelBtn.IsEnabled = false;
             NextBtn.IsEnabled = false;
             CancellationTokenSource cts = new CancellationTokenSource();
@@ -51,17 +53,15 @@ namespace Pixiv_Nginx_GUI
                                        progressTimeout,
                                        cts.Token);
                 DownloadText.Text = "文件下载完成！";
-                Directory.Delete(NginxDirectory, true);
                 UnzipText.Text = "解压文件中...";
-                await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                await Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
                 UnzipText.Text = "文件解压完成！";
-                Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(LCommitDT).ToString();
-                Properties.Settings.Default.Save();
+                NewVersion = DateTime.Parse(LCommitDT).ToString();
                 NextBtn.IsEnabled = true;
             }
             catch (OperationCanceledException)
             {
-                HandyControl.Controls.MessageBox.Show("文件下载超时，请重试！", "下载", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                HandyControl.Controls.MessageBox.Show("文件下载超时，是正常现象，多重试一两次就好啦\r\n实在不行可以手动下载 main 分支的源码压缩包并从本地安装 QAQ", "下载超时", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
             catch (Exception ex)
             {
@@ -132,7 +132,7 @@ namespace Pixiv_Nginx_GUI
         {
             EnsureDirectoryExists(dataDirectory);
             EnsureDirectoryExists(NginxDirectory);
-            EnsureDirectoryExists(Path.Combine(dataDirectory, "temp"));
+            EnsureDirectoryExists(TempDirectory);
         }
 
         public static void EnsureDirectoryExists(string path)
@@ -205,42 +205,54 @@ namespace Pixiv_Nginx_GUI
             }
             else if (stepbar.StepIndex == 3)
             {
-                this.Close();
-                Application.Current.MainWindow.Show();
+                if (HandyControl.Controls.MessageBox.Show("完成向导后，将无法通过“取消部署”按钮回退所有修改，继续吗？", "完成向导", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                {
+                    Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(NewVersion).ToString();
+                    Properties.Settings.Default.Save();
+                    Directory.Delete(OldNginxDirectory,true);
+                    this.Close();
+                    Application.Current.MainWindow.Show();
+
+                }
             }
         }
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
             Directory.Delete(NginxDirectory, true);
-            X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.MaxAllowed);
-            X509Certificate2Collection collection = store.Certificates;
-            string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
-            X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
-            try
+            PublicHelper.RenameDirectory(OldNginxDirectory,NginxDirectory);
+            if (PreviousCERState == false)
             {
-                if (fcollection != null)
+                X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.MaxAllowed);
+                X509Certificate2Collection collection = store.Certificates;
+                string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+                X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
+                try
                 {
-                    if (fcollection.Count > 0)
+                    if (fcollection != null)
                     {
-                        store.RemoveRange(fcollection);
+                        if (fcollection.Count > 0)
+                        {
+                            store.RemoveRange(fcollection);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                HandyControl.Controls.MessageBox.Show($"删除证书失败！\r\n{ex.Message}", "删除证书", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                store.Close();
+                catch (Exception ex)
+                {
+                    HandyControl.Controls.MessageBox.Show($"删除证书失败！\r\n{ex.Message}", "删除证书", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    store.Close();
+                }
             }
             try
             {
                 if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts") && File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts.bak"))
                 {
                     File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts.bak", "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
+                    File.Delete("C:\\Windows\\System32\\drivers\\etc\\hosts.bak");
                 }
                 Flushdns();
             }
@@ -252,7 +264,7 @@ namespace Pixiv_Nginx_GUI
             Application.Current.MainWindow.Show();
         }
 
-        private void Addhosts_Click(object sender, RoutedEventArgs e)
+        private void AddHosts_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -277,7 +289,7 @@ namespace Pixiv_Nginx_GUI
             }
         }
 
-        private void Replacehosts_Click(object sender, RoutedEventArgs e)
+        private void ReplaceHosts_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -301,6 +313,13 @@ namespace Pixiv_Nginx_GUI
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             CheckFiles();
+            X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            store.Open(OpenFlags.MaxAllowed);
+            X509Certificate2Collection collection = store.Certificates;
+            string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+            X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
+            PreviousCERState = (fcollection != null && fcollection.Count > 0);
+            store.Close();
         }
 
         private async void RetryBtn_Click(object sender, RoutedEventArgs e)
@@ -312,7 +331,6 @@ namespace Pixiv_Nginx_GUI
 
         private async void ChooseBtn_Click(object sender, RoutedEventArgs e)
         {
-            string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Title = "选择ZIP文件",
@@ -350,20 +368,16 @@ namespace Pixiv_Nginx_GUI
                     ChooseBtn.IsEnabled = false;
                     try
                     {
-                        Directory.Delete(NginxDirectory, true);
-                        DownloadText.Text += $"文件下载完成\r\n";
-                        Directory.Delete(NginxDirectory, true);
                         UnzipText.Text = "解压文件中...";
-                        await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                        await Task.Run(() => PublicHelper.UnZip(filePath, dataDirectory, false));
                         UnzipText.Text = "文件解压完成！";
-                        Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(LCommitDT).ToString();
-                        Properties.Settings.Default.Save();
+                        NewVersion = DateTime.Parse(inputBox.InputText).ToString();
                         NextBtn.IsEnabled = true;
                         HandyControl.Controls.MessageBox.Show("从本地安装成功！", "本地安装", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
                     {
-                        HandyControl.Controls.MessageBox.Show($"从本地更新失败！\r\n{ex}", "更新", MessageBoxButton.OK, MessageBoxImage.Error);
+                        HandyControl.Controls.MessageBox.Show($"从本地安装失败！\r\n{ex}", "本地安装", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                     finally
                     {

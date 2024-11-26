@@ -111,8 +111,8 @@
                             </LinearGradientBrush>
                         </ProgressBar.Foreground>
                     </ProgressBar>
-                    <Button x:Name="RetryBtn" IsEnabled="False" Click="RetryBtn_Click" Margin="50,0,50,0" Height="30" HorizontalAlignment="Stretch" Content="重试（下载失败或超时是正常现象 QAQ）" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
-                    <Button x:Name="ChooseBtn" IsEnabled="False" Click="ChooseBtn_Click" Margin="50,10,50,0" Height="30" HorizontalAlignment="Stretch" Content="选择本地文件（如果实在不行可以手动下载）" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
+                    <Button x:Name="RetryBtn" IsEnabled="False" Click="RetryBtn_Click" Margin="50,0,50,0" Height="30" HorizontalAlignment="Stretch" Content="重试" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
+                    <Button x:Name="ChooseBtn" IsEnabled="False" Click="ChooseBtn_Click" Margin="50,10,50,0" Height="30" HorizontalAlignment="Stretch" Content="从本地文件安装" Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF0017D4" BorderBrush="#FF0017D4" VerticalContentAlignment="Center"/>
                     <TextBlock Margin="50,30,50,10" x:Name="UnzipText" TextWrapping="Wrap" Text="等待解压文件" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush EndPoint="1,0">
@@ -185,8 +185,8 @@
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="Replacehosts" Margin="20,0,10,10" Height="30" Click="Replacehosts_Click" HorizontalAlignment="Stretch" Content="替换" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
-                        <Button Grid.Column="1" x:Name="Addhosts" Margin="20,0,10,10" Height="30" Click="Addhosts_Click" HorizontalAlignment="Stretch" Content="追加" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                        <Button x:Name="Replacehosts" Margin="20,0,10,10" Height="30" Click="ReplaceHosts_Click" HorizontalAlignment="Stretch" Content="替换" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="1" x:Name="Addhosts" Margin="20,0,10,10" Height="30" Click="AddHosts_Click" HorizontalAlignment="Stretch" Content="追加" Background="#70FFFFFF" FontWeight="Bold" FontSize="18" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00C7B9" BorderBrush="#FF00C7B9" VerticalContentAlignment="Center"/>
                     </Grid>
                 </StackPanel>
             </ScrollViewer>

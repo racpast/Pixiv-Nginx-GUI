@@ -50,11 +50,15 @@ namespace Pixiv_Nginx_GUI
             {
                 NginxST.Text = "当前 Nginx 状态：运行中";
                 NginxST.Foreground = new SolidColorBrush(Colors.ForestGreen);
+                StartBtn.IsEnabled = false;
+                StopBtn.IsEnabled = true;
             }
             else
             {
                 NginxST.Text = "当前 Nginx 状态：已停止";
                 NginxST.Foreground = new SolidColorBrush(Colors.Red);
+                StartBtn.IsEnabled = true;
+                StopBtn.IsEnabled = false;
             }
         }
 
@@ -68,7 +72,11 @@ namespace Pixiv_Nginx_GUI
 
         public static string dataDirectory = Path.Combine(currentDirectory, "data");
 
+        public static string TempDirectory = Path.Combine(dataDirectory, "temp");
+
         public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
+
+        public static string OldNginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx.old");
 
         readonly string nginxPath = Path.Combine(NginxDirectory, "nginx.exe");
 
@@ -94,7 +102,7 @@ namespace Pixiv_Nginx_GUI
             string[] LogfilePaths = { nginxLog1Path, nginxLog2Path, nginxLog3Path, nginxLog4Path };
             EnsureDirectoryExists(dataDirectory);
             EnsureDirectoryExists(NginxDirectory);
-            EnsureDirectoryExists(Path.Combine(dataDirectory, "temp"));
+            EnsureDirectoryExists(TempDirectory);
             EnsureDirectoryExists(nginxLogPath);
             foreach (var filePath in ImportantfilePaths)
             {
@@ -224,8 +232,10 @@ namespace Pixiv_Nginx_GUI
             return totalSizeInMB;
         }
 
-        private void AutoConfigBtn_Click(object sender, RoutedEventArgs e)
+        private async void AutoConfigBtn_Click(object sender, RoutedEventArgs e)
         {
+            await KillNginx();
+            PublicHelper.RenameDirectory(NginxDirectory,OldNginxDirectory);
             FirstUse firstUse = new FirstUse();
             firstUse.Show();
             this.Hide();
@@ -387,7 +397,7 @@ namespace Pixiv_Nginx_GUI
                 using (TaskService ts = new TaskService())
                 {
                     string taskName = "StartNginx";
-                    Microsoft.Win32.TaskScheduler.Task existingTask = ts.GetTask(taskName);
+                    Task existingTask = ts.GetTask(taskName);
                     if (existingTask != null)
                     {
                         ts.RootFolder.DeleteTask(taskName);
@@ -439,7 +449,7 @@ namespace Pixiv_Nginx_GUI
         private async void UpdateBtn_Click(object sender, RoutedEventArgs e)
         {
             string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
-            string destinationPath = Path.Combine(currentDirectory, "data", "temp", "Pixiv-Nginx-main.zip");
+            string destinationPath = Path.Combine(TempDirectory, "Pixiv-Nginx-main.zip");
             UpdateBtn.IsEnabled = false;
             CheckUpdateBtn.IsEnabled = false;
             ChooseUpdateBtn.IsEnabled = false;

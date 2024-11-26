@@ -9,57 +9,49 @@ namespace Pixiv_Nginx_GUI
 {
     public class PublicHelper
     {
-        public static void UnZip(string zipedFile, string strDirectory, bool overWrite, string password)
+        public static void UnZip(string zipedFile, string strDirectory, bool overWrite, string password = null)
         {
-            if (strDirectory == "")
+            if (string.IsNullOrEmpty(strDirectory))
                 strDirectory = Directory.GetCurrentDirectory();
-            if (!strDirectory.EndsWith("\\"))
-                strDirectory += "\\";
 
-            using (ZipInputStream s = new ZipInputStream(File.OpenRead(zipedFile)))
+            strDirectory = Path.Combine(strDirectory, ""); 
+
+            using (ZipInputStream zipStream = new ZipInputStream(File.OpenRead(zipedFile)))
             {
-                if (password != null)
+                if (!string.IsNullOrEmpty(password))
                 {
-                    s.Password = password;
+                    zipStream.Password = password;
                 }
-                ZipEntry theEntry;
 
-                while ((theEntry = s.GetNextEntry()) != null)
+                ZipEntry entry;
+                while ((entry = zipStream.GetNextEntry()) != null)
                 {
-                    string directoryName = "";
-                    string pathToZip = "";
-                    pathToZip = theEntry.Name;
+                    string entryPath = Path.Combine(strDirectory, entry.Name);
+                    string directoryName = Path.GetDirectoryName(entryPath);
 
-                    if (pathToZip != "")
-                        directoryName = Path.GetDirectoryName(pathToZip) + "\\";
-
-                    string fileName = Path.GetFileName(pathToZip);
-
-                    Directory.CreateDirectory(strDirectory + directoryName);
-
-                    if (fileName != "")
+                    if (!string.IsNullOrEmpty(directoryName))
                     {
-                        if ((File.Exists(strDirectory + directoryName + fileName) && overWrite) || (!File.Exists(strDirectory + directoryName + fileName)))
-                        {
-                            using (FileStream streamWriter = File.Create(strDirectory + directoryName + fileName))
-                            {
-                                int size = 2048;
-                                byte[] data = new byte[2048];
-                                while (true)
-                                {
-                                    size = s.Read(data, 0, data.Length);
+                        Directory.CreateDirectory(directoryName);
+                    }
 
-                                    if (size > 0)
-                                        streamWriter.Write(data, 0, size);
-                                    else
-                                        break;
+                    string fileName = Path.GetFileName(entryPath);
+                    if (!string.IsNullOrEmpty(fileName))
+                    {
+                        bool fileExists = File.Exists(entryPath);
+                        if (overWrite || !fileExists)
+                        {
+                            using (FileStream fileStream = File.Create(entryPath))
+                            {
+                                byte[] buffer = new byte[2048];
+                                int bytesRead;
+                                while ((bytesRead = zipStream.Read(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    fileStream.Write(buffer, 0, bytesRead);
                                 }
-                                streamWriter.Close();
                             }
                         }
                     }
                 }
-                s.Close();
             }
         }
 
@@ -70,7 +62,7 @@ namespace Pixiv_Nginx_GUI
 
         public static void UnZip(string zipedFile, string strDirectory)
         {
-            UnZip(zipedFile, strDirectory, true);
+            UnZip(zipedFile, strDirectory, true, null);
         }
 
         private static readonly HttpClient _httpClient = new HttpClient
@@ -98,24 +90,28 @@ namespace Pixiv_Nginx_GUI
                     const int bufferSize = 8192;
                     byte[] buffer = new byte[bufferSize];
                     int bytesRead;
+                    DateTime downloadStartTime = DateTime.UtcNow;
+
                     while ((bytesRead = await stream.ReadAsync(buffer, 0, bufferSize, cancellationToken)) > 0)
                     {
                         await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                         downloadedBytes += bytesRead;
-                        if (progress != null)
-                        {
-                            double progressPercentage = (double)downloadedBytes / totalBytes * 100;
-                            progress.Report(progressPercentage);
-                        }
-                        if (progress != null && (DateTime.UtcNow - lastProgressUpdate).TotalMilliseconds > progressTimeout.TotalMilliseconds)
-                        {
-                            throw new TimeoutException("下载进度在指定时间内没有变化，操作超时。");
-                        }
-                        if (bytesRead > 0)
-                        {
-                            lastProgressUpdate = DateTime.UtcNow;
-                        }
+
+                        progress?.Report((double)downloadedBytes / totalBytes * 100);
+
+                        lastProgressUpdate = DateTime.UtcNow;
+
                         cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    if (DateTime.UtcNow - lastProgressUpdate > progressTimeout)
+                    {
+                        throw new TimeoutException("下载进度在超时时间内没有变化，操作超时。");
+                    }
+
+                    if (downloadedBytes == 0 && DateTime.UtcNow - downloadStartTime > progressTimeout)
+                    {
+                        throw new TimeoutException("没有数据下载，操作超时。");
                     }
                 }
             }
@@ -131,11 +127,41 @@ namespace Pixiv_Nginx_GUI
 
         public static async Task<string> GetAsync(string url)
         {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-            HttpResponseMessage response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            string result = await response.Content.ReadAsStringAsync();
-            return result;
+            try
+            {
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public static void RenameDirectory(string oldPath, string newPath)
+        {
+            try
+            {
+                if (Directory.Exists(oldPath))
+                {
+                    string newParentDirectory = Path.GetDirectoryName(newPath);
+                    if (!Directory.Exists(newParentDirectory))
+                    {
+                        Directory.CreateDirectory(newParentDirectory);
+                    }
+                    if (Directory.Exists(newPath))
+                    {
+                        Directory.Delete(newPath, true);
+                    }
+                    Directory.Move(oldPath, newPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"重命名目录时发生错误: {ex.Message}", ex);
+            }
         }
     }
 }
