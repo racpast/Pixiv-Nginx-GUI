@@ -46,5 +46,17 @@ namespace Pixiv_Nginx_GUI.Properties {
                 this["IsFirst"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("V1.2")]
+        public string GUIVersion {
+            get {
+                return ((string)(this["GUIVersion"]));
+            }
+            set {
+                this["GUIVersion"] = value;
+            }
+        }
     }
 }

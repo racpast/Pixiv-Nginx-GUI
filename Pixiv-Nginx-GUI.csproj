@@ -180,9 +180,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="bkg.png" />
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.7.2 %28x86 和 x64%29</ProductName>
@@ -195,9 +192,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="bkg2.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="CerWarn.png" />
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +199,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="nginxwarn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="mainbkg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="firstbkg.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -21,7 +21,7 @@ namespace Pixiv_Nginx_GUI
         // 定义用于更新日志和 Nginx 状态的计时器
         private readonly DispatcherTimer _logUpdateTimer;
         private readonly DispatcherTimer _NginxStUpdateTimer;
-        // 先前的证书安装状态，用于回退修改
+        // 新的版本号，完成安装时写入Properties.Settings.Default.CurrentVersionCommitDate
         private string NewVersion;
         // 定义基本路径
         public static string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -315,8 +315,31 @@ namespace Pixiv_Nginx_GUI
         }
 
         // 窗口加载完成事件
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // 在主窗口标题显示版本
+            WindowTitle.Text = "Pixiv-Nginx 部署工具 " + Properties.Settings.Default.GUIVersion;
+            try
+            {
+                // 异步获取 GitHub 的最新发布信息
+                string LatestReleaseInfo = await PublicHelper.GetAsync("https://api.github.com/repos/racpast/Pixiv-Nginx-GUI/releases/latest");
+                // 将返回的JSON字符串解析为JObject
+                JObject repodata = JObject.Parse(LatestReleaseInfo);
+                // 从解析后的JSON中获取最后一次发布的信息
+                string LatestReleaseTag = repodata["tag_name"].ToString();
+                string LatestReleasePublishedDt = repodata["published_at"].ToString();
+                // 比较当前安装的版本与最后一次发布的版本
+                if (LatestReleaseTag.ToUpper() != Properties.Settings.Default.GUIVersion)
+                {
+                    // 如果有新版本，则弹出提示框
+                    HandyControl.Controls.MessageBox.Show($"Pixiv-Nginx-GUI 有新版本可用，请及时获取最新版本！\r\n版本号：{LatestReleaseTag.ToUpper()}\r\n发布时间(GMT)：{LatestReleasePublishedDt}", "主程序更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 捕获异常并弹出错误提示框
+                HandyControl.Controls.MessageBox.Show($"检查更新时遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             // 检查应用程序的设置，判断是否为首次运行
             if (Properties.Settings.Default.IsFirst)
             {
@@ -624,13 +647,27 @@ namespace Pixiv_Nginx_GUI
         // 更新至最新版本按钮的点击事件
         private async void UpdateBtn_Click(object sender, RoutedEventArgs e)
         {
-            // 定义main.zip的下载地址和保存路径
-            string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
-            string destinationPath = Path.Combine(TempDirectory, "Pixiv-Nginx-main.zip");
             // 禁用有关按钮
             UpdateBtn.IsEnabled = false;
             CheckUpdateBtn.IsEnabled = false;
             ChooseUpdateBtn.IsEnabled = false;
+            string fileUrl = "https://github.com/mashirozx/Pixiv-Nginx/archive/refs/heads/main.zip";
+            string ProxyUrl;
+            UpdateBtn.Content = "寻找最优代理...";
+            UpdateLogTb.Text += "开始寻找最优代理...";
+            string fastestproxy = await PublicHelper.FindFastestProxy(PublicHelper.proxies, fileUrl);
+            if (fastestproxy == "Mirror")
+            {
+                ProxyUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
+                UpdateLogTb.Text += "最优代理服务器是: " + ProxyUrl;
+            }
+            else
+            {
+                ProxyUrl = "https://" + fastestproxy + "/https://github.com/mashirozx/Pixiv-Nginx/archive/refs/heads/main.zip";
+                UpdateLogTb.Text += "最优代理服务器是: " + fastestproxy;
+            }
+            // 定义 main.zip 的保存路径
+            string destinationPath = Path.Combine(TempDirectory, "Pixiv-Nginx-main.zip");
             // 创建一个取消令牌源，用于控制下载过程的中断
             CancellationTokenSource cts = new CancellationTokenSource();
             // 设置进度更新的超时时间
@@ -640,11 +677,11 @@ namespace Pixiv_Nginx_GUI
             try
             {
                 // 在更新日志文本框中添加信息
-                UpdateLogTb.Text += $"从{fileUrl}下载文件到{destinationPath}\r\n";
+                UpdateLogTb.Text += $"从{ProxyUrl}下载文件到{destinationPath}\r\n";
                 // 存储下载前更新日志文本框的内容以便持续更新进度
                 string TextBfDownload = UpdateLogTb.Text;
                 // 异步下载文件，并更新下载进度
-                await PublicHelper.DownloadFileAsync(fileUrl,
+                await PublicHelper.DownloadFileAsync(ProxyUrl,
                                        destinationPath,
                                        new Progress<double>(progress =>
                                        {
@@ -668,6 +705,11 @@ namespace Pixiv_Nginx_GUI
                 UpdateLogTb.Text += $"解压新版本压缩包...\r\n";
                 // 异步解压文件
                 await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                // 镜像站与加速代理所下载的压缩包差异的处理
+                if (fastestproxy != "Mirror")
+                {
+                    PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                }
                 // 更新UI，表示文件解压完成
                 UpdateBtn.Content = $"解压完成";
                 UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
@@ -769,6 +811,11 @@ namespace Pixiv_Nginx_GUI
                         UpdateLogTb.Text += $"解压新版本压缩包...\r\n";
                         // 在后台线程中解压文件
                         await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(filePath, dataDirectory, false));
+                        // 镜像站与加速代理所下载的压缩包差异的处理
+                        if (Directory.Exists(Path.Combine(dataDirectory, "Pixiv-Nginx-main")))
+                        {
+                            PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                        }
                         // 更新解压状态
                         UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
                         // 将记录的新版本写入 Properties.Settings.Default.CurrentVersionCommitDate 并保存设置

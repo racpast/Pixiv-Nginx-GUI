@@ -31,8 +31,22 @@ namespace Pixiv_Nginx_GUI
         // 用于下载与解压最新的 Pixiv-Nginx 源码压缩包
         public async Task DownloadZip()
         {
-            // 定义 main.zip 的下载地址和保存路径
-            string fileUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
+            UnzipText.Text = "等待解压文件";
+            string fileUrl = "https://github.com/mashirozx/Pixiv-Nginx/archive/refs/heads/main.zip";
+            string ProxyUrl;
+            DownloadText.Text = "正在寻找最优代理...";
+            string fastestproxy = await PublicHelper.FindFastestProxy(PublicHelper.proxies, fileUrl);
+            if (fastestproxy == "Mirror")
+            {
+                ProxyUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
+                Console.WriteLine("最优代理服务器是: " + ProxyUrl);
+            }
+            else
+            {
+                ProxyUrl = "https://" + fastestproxy + "/https://github.com/mashirozx/Pixiv-Nginx/archive/refs/heads/main.zip";
+                Console.WriteLine("最优代理服务器是: " + fastestproxy);
+            }
+            // 定义 main.zip 的保存路径
             string destinationPath = Path.Combine(TempDirectory, "Pixiv-Nginx-main.zip");
             // 禁用取消和下一步按钮，防止用户中断下载过程
             CancelBtn.IsEnabled = false;
@@ -54,7 +68,7 @@ namespace Pixiv_Nginx_GUI
                 // 提取最后一次提交的日期
                 string LCommitDT = commitdata["committer"]["date"].ToString();
                 // 异步下载文件，并更新下载进度
-                await PublicHelper.DownloadFileAsync(fileUrl,
+                await PublicHelper.DownloadFileAsync(ProxyUrl,
                                        destinationPath,
                                        new Progress<double>(progress =>
                                        {
@@ -72,6 +86,11 @@ namespace Pixiv_Nginx_GUI
                 UnzipText.Text = "解压文件中...";
                 // 异步解压文件
                 await Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                // 镜像站与加速代理所下载的压缩包差异的处理
+                if (fastestproxy != "Mirror")
+                {
+                    PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                }
                 // 更新UI，表示文件解压完成
                 UnzipText.Text = "文件解压完成！";
                 // 记录部署完成时的新版本号
@@ -221,32 +240,31 @@ namespace Pixiv_Nginx_GUI
             // 检测步骤条是否在第一步
             if (stepbar.StepIndex == 0)
             {
-                // 检测是否处于欢迎页面
-                if (WelcomePage.Visibility == Visibility.Visible)
-                {
-                    // 是则隐藏欢迎页面并显示第一页
-                    WelcomePage.Visibility = Visibility.Hidden;
-                    APage.Visibility = Visibility.Visible;
-                    // 等待最新的 Pixiv-Nginx 源码压缩包下载与解压完成
-                    await DownloadZip();
-                }
-                else
-                {
-                    // 如果已经在第一页，则隐藏第一页，显示第二页
-                    APage.Visibility = Visibility.Hidden;
-                    BPage.Visibility = Visibility.Visible;
-                    // 下一步
-                    stepbar.StepIndex++;
-                    // 禁用“取消部署”与“下一步”按钮防止证书安装中断，需要在 InstallCertificate() 方法中重新启用
-                    NextBtn.IsEnabled = false;
-                    CancelBtn.IsEnabled = false;
-                    // 安装证书
-                    InstallCertificate();
-                }
-            }
-            else if (stepbar.StepIndex == 1)
+                // 是则隐藏欢迎页面并显示第一页
+                WelcomePage.Visibility = Visibility.Hidden;
+                APage.Visibility = Visibility.Visible;
+                // 下一步
+                stepbar.StepIndex++;
+                // 禁用下一步按钮，
+                NextBtn.IsEnabled = false;
+                CancelBtn.IsEnabled = false;
+                await DownloadZip();
+            } else if (stepbar.StepIndex == 1)
             {
-                // 步骤条在第二步则隐藏第二页显示第三页
+                // 步骤条在第二步则隐藏第一页显示第二页
+                APage.Visibility = Visibility.Hidden;
+                BPage.Visibility = Visibility.Visible;
+                // 下一步
+                stepbar.StepIndex++;
+                // 禁用“取消部署”与“下一步”按钮防止证书安装中断，需要在 InstallCertificate() 方法中重新启用
+                NextBtn.IsEnabled = false;
+                CancelBtn.IsEnabled = false;
+                // 安装证书
+                InstallCertificate();
+            }
+            else if (stepbar.StepIndex == 2)
+            {
+                // 步骤条在第三步则隐藏第二页显示第三页
                 BPage.Visibility = Visibility.Hidden;
                 CPage.Visibility = Visibility.Visible;
                 // 下一步
@@ -254,17 +272,17 @@ namespace Pixiv_Nginx_GUI
                 // 禁用下一步按钮，需要在 ReplaceHosts_Click 和 AddHosts_Click 中重新启用
                 NextBtn.IsEnabled = false;
             }
-            else if (stepbar.StepIndex == 2)
+            else if (stepbar.StepIndex == 3)
             {
-                // 步骤条在第三步则隐藏第三页显示第四页
+                // 步骤条在第四步则隐藏第三页显示第四页
                 CPage.Visibility = Visibility.Hidden;
                 DPage.Visibility = Visibility.Visible;
                 // 下一步
                 stepbar.StepIndex++;
             }
-            else if (stepbar.StepIndex == 3)
+            else if (stepbar.StepIndex == 4)
             {
-                // 步骤条在第四步则弹窗确认是否保存修改
+                // 步骤条在第五步则弹窗确认是否保存修改
                 if (HandyControl.Controls.MessageBox.Show("完成向导后，将无法通过“取消部署”按钮回退所有修改，继续吗？", "完成向导", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
                 {
                     // 将记录的新版本写入 Properties.Settings.Default.CurrentVersionCommitDate 并保存设置
@@ -494,10 +512,17 @@ namespace Pixiv_Nginx_GUI
                     ChooseBtn.IsEnabled = false;
                     try
                     {
+                        //恢复初始文本
+                        DownloadText.Text = "下载文件(0%)";
+                        DownloadProgress.Value = 0;
                         // 显示解压状态
                         UnzipText.Text = "解压文件中...";
                         // 在后台线程中解压文件
                         await Task.Run(() => PublicHelper.UnZip(filePath, dataDirectory, false));
+                        // 镜像站与加速代理所下载的压缩包差异的处理
+                        if (Directory.Exists(Path.Combine(dataDirectory, "Pixiv-Nginx-main"))){
+                            PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                        }
                         // 更新解压状态
                         UnzipText.Text = "文件解压完成！";
                         // 更新新版本信息

@@ -8,6 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("nginxwarn.png")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("firstbkg.png")]
 
 

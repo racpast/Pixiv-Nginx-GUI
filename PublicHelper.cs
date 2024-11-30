@@ -1,14 +1,136 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Linq;
+
 
 namespace Pixiv_Nginx_GUI
 {
     public class PublicHelper
     {
+        // Github 文件下载加速代理列表
+        public static readonly List<string> proxies = new List<string>{
+            "gh.tryxd.cn",
+            "cccccccccccccccccccccccccccccccccccccccccccccccccccc.cc",
+            "gh.222322.xyz",
+            "ghproxy.cc",
+            "gh.catmak.name",
+            "gh.nxnow.top",
+            "ghproxy.cn",
+            "ql.133.info",
+            "cf.ghproxy.cc",
+            "ghproxy.imciel.com",
+            "g.blfrp.cn",
+            "gh-proxy.ygxz.in",
+            "ghp.keleyaa.com",
+            "gh.pylas.xyz",
+            "githubapi.jjchizha.com",
+            "ghp.arslantu.xyz",
+            "githubapi.jjchizha.com",
+            "ghp.arslantu.xyz",
+            "git.40609891.xyz",
+            "firewall.lxstd.org",
+            "gh.monlor.com",
+            "slink.ltd",
+            "github.geekery.cn",
+            "gh.jasonzeng.dev",
+            "github.tmby.shop",
+            "gh.sixyin.com",
+            "liqiu.love",
+            "git.886.be",
+            "github.xxlab.tech",
+            "github.ednovas.xyz",
+            "gh.xx9527.cn",
+            "gh-proxy.linioi.com",
+            "gitproxy.mrhjx.cn",
+            "github.wuzhij.com",
+            "git.speed-ssr.tech"
+            };
+
+        // 寻找最优代理的方法
+        public static async Task<string> FindFastestProxy(List<string> proxies, string targetUrl)
+        {
+            long MirrorRpms = -1;
+            // 逐个测试代理延迟
+            var proxyTasks = proxies.Select(async proxy =>
+            {
+                var proxyUri = new Uri($"https://{proxy}");
+                using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
+                {
+                    var stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    try
+                    {
+                        var response = await client.GetAsync(proxyUri + targetUrl, HttpCompletionOption.ResponseHeadersRead);
+                        response.EnsureSuccessStatusCode();
+                        Console.WriteLine(proxy + " —— " + response.Content.Headers);
+                        return (proxy, stopwatch.ElapsedMilliseconds, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(proxyUri + targetUrl + " —— " + ex);
+                        return (proxy, stopwatch.ElapsedMilliseconds, ex);
+                    }
+                    finally
+                    {
+                        stopwatch.Stop();
+                    }
+                }
+            }).ToList();
+            // 测试镜像站延迟
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
+            {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                try
+                {
+                    var response = await client.GetAsync("https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip", HttpCompletionOption.ResponseHeadersRead);
+                    response.EnsureSuccessStatusCode();
+                    Console.WriteLine("https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip ——" + response.Content.Headers);
+                    MirrorRpms = stopwatch.ElapsedMilliseconds;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip ——" + ex);
+                }
+                finally
+                {
+                    stopwatch.Stop();
+                }
+            }
+            // 等待测试全部完成
+            var proxyResults = await Task.WhenAll(proxyTasks);
+            // 输出到控制台，调试用
+            foreach (var (proxy, ElapsedMilliseconds, ex) in proxyResults)
+            {
+                if (ex is TaskCanceledException)
+                {
+                    Console.WriteLine(proxy + " —— 超时");
+                }
+                else if (ex != null)
+                {
+                    Console.WriteLine(proxy + " —— 错误");
+                }
+                else
+                {
+                    Console.WriteLine(proxy + " —— " + ElapsedMilliseconds + "ms");
+                }
+            }
+            Console.WriteLine("https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip —— " + MirrorRpms + "ms");
+            // 排除有错误的结果并排序
+            var fastestProxy = proxyResults
+                .Where(result => result.ex == null)
+                .OrderBy(result => result.ElapsedMilliseconds)
+                .First();
+            // 如果镜像站延迟有效且比代理低，则返回 Mirror ，否则返回延迟最低的代理地址
+            return (MirrorRpms != -1 && fastestProxy.ElapsedMilliseconds > MirrorRpms) ? "Mirror" : fastestProxy.proxy;
+        }
+
         // 解压缩ZIP文件的方法，支持密码和覆盖选项
         public static void UnZip(string zipedFile, string strDirectory, bool overWrite, string password = null)
         {

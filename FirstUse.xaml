@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/bkg2.png"/>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/firstbkg.png"/>
         </Grid.Background>
         <Border Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
             <Border.BorderBrush>
@@ -25,6 +25,14 @@
                 </LinearGradientBrush>
             </Border.BorderBrush>
             <hc:StepBar Grid.Row="0" x:Name="stepbar" Height="Auto" Margin="10,10,10,5">
+                <hc:StepBarItem Content="开始&#x000A;部署" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
+                    <hc:StepBarItem.Foreground>
+                        <LinearGradientBrush EndPoint="1,0">
+                            <GradientStop Color="#FFCE00FF"/>
+                            <GradientStop Color="#FF0057CC" Offset="1"/>
+                        </LinearGradientBrush>
+                    </hc:StepBarItem.Foreground>
+                </hc:StepBarItem>
                 <hc:StepBarItem Content="下载&#x000A;Pixiv-Nginx&#x000A;项目文件并解压" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" FontSize="20">
                     <hc:StepBarItem.Foreground>
                         <LinearGradientBrush EndPoint="1,0">
@@ -95,7 +103,7 @@
             </Border.BorderBrush>
             <Grid>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock x:Name="DownloadText" Margin="50,20,50,10" TextWrapping="Wrap" Text="下载文件(0%)" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                    <TextBlock x:Name="DownloadText" Margin="50,20,50,10" TextWrapping="Wrap" Text="下载文件" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush EndPoint="1,0">
                                 <GradientStop Color="#FF2CF0FF"/>
