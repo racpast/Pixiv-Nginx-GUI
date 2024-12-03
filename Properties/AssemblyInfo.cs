@@ -9,9 +9,9 @@ using System.Windows;
 [assembly: AssemblyTitle("Pixiv-Nginx-GUI")]
 [assembly: AssemblyDescription("Pixiv-Nginx 的自动化配置程序。")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("https://github.com/racpast")]
+[assembly: AssemblyCompany("Racpast")]
 [assembly: AssemblyProduct("Pixiv-Nginx-GUI")]
-[assembly: AssemblyCopyright("https://github.com/racpast")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -50,6 +50,6 @@ using System.Windows;
 //可以指定所有这些值，也可以使用“生成号”和“修订号”的默认值
 //通过使用 "*"，如下所示:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.2.0.0")]
-[assembly: AssemblyFileVersion("1.2.0.0")]
+[assembly: AssemblyVersion("1.3.0.0")]
+[assembly: AssemblyFileVersion("1.3.0.0")]
 [assembly: NeutralResourcesLanguage("")]

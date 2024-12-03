@@ -22,41 +22,5 @@ namespace Pixiv_Nginx_GUI.Properties {
                 return defaultInstance;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string CurrentVersionCommitDate {
-            get {
-                return ((string)(this["CurrentVersionCommitDate"]));
-            }
-            set {
-                this["CurrentVersionCommitDate"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool IsFirst {
-            get {
-                return ((bool)(this["IsFirst"]));
-            }
-            set {
-                this["IsFirst"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("V1.2")]
-        public string GUIVersion {
-            get {
-                return ((string)(this["GUIVersion"]));
-            }
-            set {
-                this["GUIVersion"] = value;
-            }
-        }
     }
 }

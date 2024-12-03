@@ -1,32 +1,31 @@
-﻿using Microsoft.Win32;
+﻿using HandyControl.Controls;
+using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using static Pixiv_Nginx_GUI.PublicHelper;
 
 namespace Pixiv_Nginx_GUI
 {
     /// <summary>
     /// FirstUse.xaml 的交互逻辑
     /// </summary>
-    public partial class FirstUse : Window
+    public partial class FirstUse : System.Windows.Window
     {
-        // 新的版本号，完成安装时写入Properties.Settings.Default.CurrentVersionCommitDate
-        public string NewVersion;
+        // 新的版本号，完成安装时写入配置文件
+        private string NewVersion;
         // 先前的证书安装状态，用于回退修改
-        public bool PreviousCERState;
-        // 定义基本路径
-        public static string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        public static string dataDirectory = Path.Combine(currentDirectory, "data");
-        public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
-        public static string OldNginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx.old");
-        public static string TempDirectory = Path.Combine(dataDirectory, "temp");
-        readonly string CERFile = Path.Combine(NginxDirectory, "ca.cer");
-        readonly string hostsFile = Path.Combine(NginxDirectory, "hosts");
+        private bool PreviousCERState;
+
+        FilesINI ConfigINI = new FilesINI();
+
+        bool _isCancelled;
+
+        bool _isHostsModified = false;
 
         // 用于下载与解压最新的 Pixiv-Nginx 源码压缩包
         public async Task DownloadZip()
@@ -35,7 +34,7 @@ namespace Pixiv_Nginx_GUI
             string fileUrl = "https://github.com/mashirozx/Pixiv-Nginx/archive/refs/heads/main.zip";
             string ProxyUrl;
             DownloadText.Text = "正在寻找最优代理...";
-            string fastestproxy = await PublicHelper.FindFastestProxy(PublicHelper.proxies, fileUrl);
+            string fastestproxy = await FindFastestProxy(proxies, fileUrl);
             if (fastestproxy == "Mirror")
             {
                 ProxyUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
@@ -58,17 +57,17 @@ namespace Pixiv_Nginx_GUI
             try
             {
                 // 从GitHub API获取仓库信息
-                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
+                string RepoInfo = await GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
                 JObject repodata = JObject.Parse(RepoInfo);
                 // 从仓库信息中提取提交信息的URL
                 string CommitInfoURL = repodata["object"]["url"].ToString();
                 // 获取提交信息
-                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
+                string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 提取最后一次提交的日期
                 string LCommitDT = commitdata["committer"]["date"].ToString();
                 // 异步下载文件，并更新下载进度
-                await PublicHelper.DownloadFileAsync(ProxyUrl,
+                await DownloadFileAsync(ProxyUrl,
                                        destinationPath,
                                        new Progress<double>(progress =>
                                        {
@@ -85,28 +84,33 @@ namespace Pixiv_Nginx_GUI
                 DownloadText.Text = "文件下载完成！";
                 UnzipText.Text = "解压文件中...";
                 // 异步解压文件
-                await Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                await Task.Run(() => UnZip(destinationPath, dataDirectory, false));
                 // 镜像站与加速代理所下载的压缩包差异的处理
                 if (fastestproxy != "Mirror")
                 {
-                    PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                    RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
                 }
                 // 更新UI，表示文件解压完成
                 UnzipText.Text = "文件解压完成！";
                 // 记录部署完成时的新版本号
                 NewVersion = DateTime.Parse(LCommitDT).ToString();
                 // 启用下一步按钮，允许用户继续操作
+                // 下载成功后不需要重新启用重试以及从本地文件安装按钮防止误导（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
                 NextBtn.IsEnabled = true;
             }
             catch (OperationCanceledException)
             {
                 // 如果下载被取消或超时，显示提示信息
                 HandyControl.Controls.MessageBox.Show("文件下载超时，是正常现象，多重试一两次就好啦\r\n实在不行可以手动下载 main 分支的源码压缩包并从本地安装 QAQ", "下载超时", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                ChooseBtn.IsEnabled = true;
+                RetryBtn.IsEnabled = true;
             }
             catch (Exception ex)
             {
                 // 如果发生其他异常，显示错误信息
                 HandyControl.Controls.MessageBox.Show($"出现异常：\r\n{ex.Message}", "异常", MessageBoxButton.OK, MessageBoxImage.Error);
+                ChooseBtn.IsEnabled = true;
+                RetryBtn.IsEnabled = true;
             }
             finally
             {
@@ -117,8 +121,6 @@ namespace Pixiv_Nginx_GUI
                 }
                 cts.Dispose();
                 CancelBtn.IsEnabled = true;
-                ChooseBtn.IsEnabled = true;
-                RetryBtn.IsEnabled = true;
             }
         }
 
@@ -165,6 +167,11 @@ namespace Pixiv_Nginx_GUI
             {
                 // 如果在安装证书过程中发生异常，则显示错误消息框
                 HandyControl.Controls.MessageBox.Show($"安装证书失败！\r\n{ex.Message}", "安装证书", MessageBoxButton.OK, MessageBoxImage.Error);
+                // 用户取消等，都回退到上一步
+                stepbar.StepIndex--;
+                APage.Visibility = Visibility.Visible;
+                BPage.Visibility = Visibility.Hidden;
+                NextBtn.IsEnabled = true;
             }
             finally
             {
@@ -177,55 +184,19 @@ namespace Pixiv_Nginx_GUI
         }
 
         // 用于确保基本目录存在
-        public void CheckFiles()
+        private void CheckFiles()
         {
             EnsureDirectoryExists(dataDirectory);
             EnsureDirectoryExists(NginxDirectory);
             EnsureDirectoryExists(TempDirectory);
         }
 
-        // 检查目录不存在则创建的方法
-        public static void EnsureDirectoryExists(string path)
-        {
-            //检查指定目录是否存在
-            if (!Directory.Exists(path))
-            {
-                //不存在则创建指定目录
-                Directory.CreateDirectory(path);
-            }
-        }
-
         // 用于刷新DNS缓存的方法
-        public void Flushdns()
+        private void Flushdns()
         {
             // 构建要执行的命令字符串，该命令用于刷新DNS缓存，并在执行后暂停，然后退出
             string command = "ipconfig /flushdns & pause & exit";
-            // 创建一个ProcessStartInfo对象，用于配置如何启动一个进程
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                // 指定要启动的进程的文件名
-                FileName = "cmd.exe",
-                // 指定传递给cmd.exe的参数，/k表示执行完命令后保持窗口打开，\"{command}\"是要执行的命令
-                Arguments = $"/k \"{command}\"",
-                // 设置为true，表示使用操作系统shell来启动进程（默认行为）
-                UseShellExecute = true,
-                // 设置为false，表示不将进程的标准输出重定向到调用进程的输出流中
-                RedirectStandardOutput = false,
-                // 设置为false，表示不将进程的标准错误输出重定向到调用进程的错误输出流中
-                RedirectStandardError = false,
-                // 设置为false，表示启动进程时创建一个新窗口
-                CreateNoWindow = false
-            };
-            try
-            {
-                // 尝试启动进程
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                // 如果启动进程时发生异常，显示错误消息
-                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RunCMD(command);
         }
 
         // 构造函数
@@ -285,9 +256,8 @@ namespace Pixiv_Nginx_GUI
                 // 步骤条在第五步则弹窗确认是否保存修改
                 if (HandyControl.Controls.MessageBox.Show("完成向导后，将无法通过“取消部署”按钮回退所有修改，继续吗？", "完成向导", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
                 {
-                    // 将记录的新版本写入 Properties.Settings.Default.CurrentVersionCommitDate 并保存设置
-                    Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(NewVersion).ToString();
-                    Properties.Settings.Default.Save();
+                    // 将记录的新版本写入配置
+                    ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", DateTime.Parse(NewVersion).ToString(), INIPath);
                     // 检测 data\pixiv-nginx.old 是否存在
                     if (Directory.Exists(OldNginxDirectory))
                     {
@@ -305,61 +275,74 @@ namespace Pixiv_Nginx_GUI
         // 取消部署按钮的点击事件
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
-            // 删除 data\pixiv-nginx
-            Directory.Delete(NginxDirectory, true);
-            // 将 data\pixiv-nginx.old 恢复为 data\pixiv-nginx.old
-            PublicHelper.RenameDirectory(OldNginxDirectory,NginxDirectory);
-            // 判断先前证书状态
-            if (PreviousCERState == false)
+            X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            try
             {
-                // 先前未安装则卸载指定证书
-                X509Store store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.MaxAllowed);
                 X509Certificate2Collection collection = store.Certificates;
                 string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
                 X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
-                try
+                if (PreviousCERState == false && fcollection.Count > 0)
                 {
-                    if (fcollection != null)
+                    // 移除证书
+                    store.RemoveRange(fcollection);
+                }
+                if (PreviousCERState == true && fcollection.Count == 0)
+                {
+                    // 检查指定的证书文件是否存在
+                    if (File.Exists(CERFile))
                     {
-                        if (fcollection.Count > 0)
-                        {
-                            store.RemoveRange(fcollection);
-                        }
+                        // 从文件中加载证书
+                        X509Certificate2 x509 = new X509Certificate2(CERFile);
+                        // 将证书添加到存储中
+                        store.Add(x509);
                     }
                 }
-                catch (Exception ex)
-                {
-                    // 如果在删除证书过程中发生异常，则显示错误消息框
-                    HandyControl.Controls.MessageBox.Show($"删除证书失败！\r\n{ex.Message}", "删除证书", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                finally
-                {
-                    // 无论是否发生异常，都关闭证书存储
-                    store.Close();
-                }
+                _isCancelled = true;
             }
-            try
+            catch (Exception ex)
             {
-                // 检测 hosts 及其备份文件是否存在
-                if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts") && File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts.bak"))
-                {
-                    // 存在则将备份文件覆盖到hosts
-                    File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts.bak", "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
-                    // 删除备份文件
-                    File.Delete("C:\\Windows\\System32\\drivers\\etc\\hosts.bak");
-                }
-                // 刷新 DNS 缓存
-                Flushdns();
+                // 如果在删除证书过程中发生异常，则显示错误消息框
+                HandyControl.Controls.MessageBox.Show($"回退修改时出错！\r\n{ex.Message}", "回退修改", MessageBoxButton.OK, MessageBoxImage.Error);
+                // 回退失败时不进行取消部署
+                _isCancelled = false;
             }
-            catch (IOException iox)
+            finally
             {
-                // 如果在操作 hosts 过程中发生异常，则显示错误消息框
-                HandyControl.Controls.MessageBox.Show($"操作hosts时出错：\r\n{iox.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                // 无论是否发生异常，都关闭证书存储
+                store.Close();
             }
-            // 关闭本窗口并打开主窗口
-            this.Close();
-            Application.Current.MainWindow.Show();
+            if (_isCancelled)
+            {
+                // 删除 data\pixiv-nginx
+                Directory.Delete(NginxDirectory, true);
+                // 将 data\pixiv-nginx.old 恢复为 data\pixiv-nginx.old
+                RenameDirectory(OldNginxDirectory, NginxDirectory);
+                if (_isHostsModified)
+                {
+                    try
+                    {
+                        // 检测 hosts 及其备份文件是否存在
+                        if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts") && File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts.bak"))
+                        {
+                            // 存在则将备份文件覆盖到hosts
+                            File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts.bak", "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
+                            // 删除备份文件
+                            File.Delete("C:\\Windows\\System32\\drivers\\etc\\hosts.bak");
+                        }
+                        // 刷新 DNS 缓存
+                        Flushdns();
+                    }
+                    catch (IOException iox)
+                    {
+                        // 如果在操作 hosts 过程中发生异常，则显示错误消息框
+                        HandyControl.Controls.MessageBox.Show($"操作hosts时出错：\r\n{iox.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                // 关闭本窗口并打开主窗口
+                this.Close();
+                Application.Current.MainWindow.Show();
+            }
         }
 
         // 追加按钮的点击事件
@@ -372,9 +355,8 @@ namespace Pixiv_Nginx_GUI
                 {
                     // 存在则备份 hosts 文件
                     File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts", "C:\\Windows\\System32\\drivers\\etc\\hosts.bak", true);
-                    string sourceContent = File.ReadAllText(hostsFile);
-                    // 追加内容到 hosts 文件尾部
-                    File.AppendAllText("C:\\Windows\\System32\\drivers\\etc\\hosts", sourceContent);
+                    // 排除无关条目、修改有关条目并添加不存在条目
+                    WriteHosts.AppendHosts("C:\\Windows\\System32\\drivers\\etc\\hosts", hostsFile);
                 }
                 else
                 {
@@ -387,6 +369,7 @@ namespace Pixiv_Nginx_GUI
                 Addhosts.IsEnabled = false;
                 Replacehosts.IsEnabled = false;
                 NextBtn.IsEnabled = true;
+                _isHostsModified = true;
             }
             catch (IOException iox)
             {
@@ -416,6 +399,7 @@ namespace Pixiv_Nginx_GUI
                 Addhosts.IsEnabled = false;
                 Replacehosts.IsEnabled = false;
                 NextBtn.IsEnabled = true;
+                _isHostsModified = true;
             }
             catch (IOException iox)
             {
@@ -476,11 +460,11 @@ namespace Pixiv_Nginx_GUI
             if (openFileDialog.ShowDialog() == true)
             {
                 // 异步获取GitHub仓库的最新提交信息
-                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
+                string RepoInfo = await GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
                 JObject repodata = JObject.Parse(RepoInfo);
                 string CommitInfoURL = repodata["object"]["url"].ToString();
                 // 异步获取提交详细信息
-                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
+                string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 获取提交的日期时间（GMT）
                 string LCommitDT = commitdata["committer"]["date"].ToString();
@@ -518,10 +502,10 @@ namespace Pixiv_Nginx_GUI
                         // 显示解压状态
                         UnzipText.Text = "解压文件中...";
                         // 在后台线程中解压文件
-                        await Task.Run(() => PublicHelper.UnZip(filePath, dataDirectory, false));
+                        await Task.Run(() => UnZip(filePath, dataDirectory, false));
                         // 镜像站与加速代理所下载的压缩包差异的处理
                         if (Directory.Exists(Path.Combine(dataDirectory, "Pixiv-Nginx-main"))){
-                            PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                            RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
                         }
                         // 更新解压状态
                         UnzipText.Text = "文件解压完成！";

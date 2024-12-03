@@ -2,7 +2,6 @@
 using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -10,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static Pixiv_Nginx_GUI.PublicHelper;
 
 namespace Pixiv_Nginx_GUI
 {
@@ -21,26 +21,13 @@ namespace Pixiv_Nginx_GUI
         // 定义用于更新日志和 Nginx 状态的计时器
         private readonly DispatcherTimer _logUpdateTimer;
         private readonly DispatcherTimer _NginxStUpdateTimer;
-        // 新的版本号，完成安装时写入Properties.Settings.Default.CurrentVersionCommitDate
+        // 新的版本号，完成安装时写入配置文件
         private string NewVersion;
-        // 定义基本路径
-        public static string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        public static string dataDirectory = Path.Combine(currentDirectory, "data");
-        public static string TempDirectory = Path.Combine(dataDirectory, "temp");
-        public static string NginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx");
-        public static string OldNginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx.old");
-        readonly string nginxPath = Path.Combine(NginxDirectory, "nginx.exe");
-        readonly string nginxConfigFile = Path.Combine(NginxDirectory, "conf", "nginx.conf");
-        readonly string CERFile = Path.Combine(NginxDirectory, "ca.cer");
-        readonly string hostsFile = Path.Combine(NginxDirectory, "hosts");
-        public static string nginxLogPath = Path.Combine(NginxDirectory, "logs");
-        readonly static string nginxLog1Path = Path.Combine(nginxLogPath, "access.log");
-        readonly static string nginxLog2Path = Path.Combine(nginxLogPath, "E-hentai-access.log");
-        readonly static string nginxLog3Path = Path.Combine(nginxLogPath, "E-hentai-error.log");
-        readonly static string nginxLog4Path = Path.Combine(nginxLogPath, "error.log");
-        // 创建一个包含所有日志文件路径的列表
-        List<string> filePaths = new List<string> { nginxLog1Path, nginxLog2Path, nginxLog3Path, nginxLog4Path };
-
+        FilesINI ConfigINI = new FilesINI();
+        // 从配置文件读取的程序信息
+        string CurrentVersionCommitDate;
+        bool IsFirst;
+        string GUIVersion;
 
         // 窗口构造函数
         public MainWindow()
@@ -110,30 +97,14 @@ namespace Pixiv_Nginx_GUI
             }
         }
 
-        // 用于检查重要目录是否存在以及日志文件是否创建的方法
-        public void CheckFiles()
+        // 用于检查重要目录是否存在以及日志文件、配置文件是否创建的方法
+        public bool CheckFiles()
         {
-            // 定义包含重要文件路径的数组
-            string[] ImportantfilePaths = { nginxPath, nginxConfigFile, CERFile, hostsFile };
-            // 定义包含日志文件路径的数组
-            string[] LogfilePaths = { nginxLog1Path, nginxLog2Path, nginxLog3Path, nginxLog4Path };
             // 确保重要目录存在
             EnsureDirectoryExists(dataDirectory);
             EnsureDirectoryExists(NginxDirectory);
             EnsureDirectoryExists(TempDirectory);
             EnsureDirectoryExists(nginxLogPath);
-            // 遍历重要文件路径数组
-            foreach (var filePath in ImportantfilePaths)
-            {
-                // 如果文件不存在
-                if (!File.Exists(filePath))
-                {
-                    // 显示消息框，提示用户检测到重要文件缺失，并建议重新下载或手动安装
-                    HandyControl.Controls.MessageBox.Show("检测到重要文件缺失，请重新下载或通过手动安装压缩包来修复文件缺失！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    // 跳出循环，不再继续检查其他文件
-                    break;
-                }
-            }
             // 遍历日志文件路径数组
             foreach (var filePath in LogfilePaths)
             {
@@ -143,22 +114,28 @@ namespace Pixiv_Nginx_GUI
                     // 创建日志文件（如果文件已存在，File.Create 会覆盖原文件，但这里我们更关心的是创建不存在的文件）
                     // 注意：File.Create 打开文件后需要关闭，但这里仅用它来创建文件，因此使用 using 语句或 File.CreateText 会更好
                     // 更好的做法是使用 File.CreateText(filePath).Close(); 或 using (File.Create(filePath)) {}
-                    File.CreateText(filePath).Close(); 
+                    File.CreateText(filePath).Close();
                 }
                 // 如果文件已存在，则不执行任何操作
             }
-        }
-
-        // 该方法用于确保指定路径的目录存在，如果目录不存在，则创建它
-        public static void EnsureDirectoryExists(string path)
-        {
-            // 如果目录不存在
-            if (!Directory.Exists(path))
+            // 如果配置文件不存在，则创建配置文件
+            if (!File.Exists(INIPath))
             {
-                // 创建目录
-                Directory.CreateDirectory(path);
+                ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", "", INIPath);
+                ConfigINI.INIWrite("程序信息", "IsFirst", "true", INIPath);
+                ConfigINI.INIWrite("程序信息", "GUIVersion", "V1.3", INIPath);
             }
-            // 如果目录已存在，则不执行任何操作
+            // 遍历重要文件路径数组
+            foreach (var filePath in ImportantfilePaths)
+            {
+                // 如果文件不存在
+                if (!File.Exists(filePath))
+                {
+                    // 跳出循环，不再继续检查其他文件
+                    return false;
+                }
+            }
+            return true;
         }
 
         // 用于更新日志显示的方法
@@ -227,69 +204,16 @@ namespace Pixiv_Nginx_GUI
                 }
             }
             // 更新清理日志按钮的内容，显示所有日志文件的总大小（以MB为单位）
-            DelLogBtn.Content = $"清理所有日志({GetTotalFileSizeInMB(filePaths)}MB)";
+            DelLogBtn.Content = $"清理所有日志({GetTotalFileSizeInMB(LogfilePaths)}MB)";
         }
 
-        // 用于杀死所有名为 "nginx" 的进程的异步方法
-        public async System.Threading.Tasks.Task KillNginx()
+        // 更新程序信息
+        public void UpdateInfo()
         {
-            // 获取所有名为 "nginx" 的进程
-            Process[] processes = Process.GetProcessesByName("nginx");
-            // 如果没有找到名为 "nginx" 的进程，则直接返回
-            if (processes.Length == 0)
-            {
-                return;
-            }
-            // 创建一个任务列表，用于存储每个杀死进程任务的任务对象
-            List<System.Threading.Tasks.Task> tasks = new List<System.Threading.Tasks.Task>();
-            // 遍历所有找到的 "nginx" 进程
-            foreach (Process process in processes)
-            {
-                // 为每个进程创建一个异步任务，该任务尝试杀死进程并处理可能的异常
-                System.Threading.Tasks.Task task = System.Threading.Tasks.Task.Run(() =>
-                {
-                    try
-                    {
-                        // 尝试杀死当前遍历到的进程
-                        process.Kill();
-                        // 等待进程退出，最多等待5000毫秒（5秒）
-                        bool exited = process.WaitForExit(5000);
-                        // 如果进程在超时时间内没有退出，则显示警告消息框
-                        if (!exited)
-                        {
-                            HandyControl.Controls.MessageBox.Show($"进程 {process.ProcessName} 在超时时间内没有退出。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // 如果在杀死进程的过程中发生异常，则显示错误消息框
-                        HandyControl.Controls.MessageBox.Show($"无法杀死进程 {process.ProcessName}: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                });
-                // 将创建的任务添加到任务列表中
-                tasks.Add(task);
-            }
-            // 等待所有杀死进程的任务完成
-            await System.Threading.Tasks.Task.WhenAll(tasks);
-        }
-
-        // 用于计算给定文件路径列表中的文件总大小（以MB为单位）的静态方法
-        static double GetTotalFileSizeInMB(List<string> filePaths)
-        {
-            // 定义一个变量来存储文件总大小（以字节为单位）
-            long totalSizeInBytes = 0;
-            // 遍历给定的文件路径列表
-            foreach (string filePath in filePaths)
-            {
-                // 使用文件路径创建一个FileInfo对象，该对象提供有关文件的详细信息
-                FileInfo fileInfo = new FileInfo(filePath);
-                // 将当前文件的长度（以字节为单位）添加到总大小中
-                totalSizeInBytes += fileInfo.Length;
-            }
-            // 将总大小（以字节为单位）转换为MB，并保留两位小数
-            double totalSizeInMB = Math.Round((double)totalSizeInBytes / (1024 * 1024), 2);
-            // 返回文件总大小（以MB为单位）
-            return totalSizeInMB;
+            // 读取程序信息
+            CurrentVersionCommitDate = ConfigINI.INIRead("程序信息", "CurrentVersionCommitDate", INIPath);
+            IsFirst = StringBoolConverter.StringToBool(ConfigINI.INIRead("程序信息", "IsFirst", INIPath));
+            GUIVersion = ConfigINI.INIRead("程序信息", "GUIVersion", INIPath);
         }
 
         // 自动配置按钮的点击事件
@@ -300,7 +224,7 @@ namespace Pixiv_Nginx_GUI
             try
             {
                 // 尝试将 data\pixiv-nginx 重命名为 data\pixiv-nginx.old
-                PublicHelper.RenameDirectory(NginxDirectory, OldNginxDirectory);
+                RenameDirectory(NginxDirectory, OldNginxDirectory);
             }catch (Exception ex)
             {
                 // 如果在重命名目录时发生异常，则显示一个错误消息框
@@ -317,19 +241,21 @@ namespace Pixiv_Nginx_GUI
         // 窗口加载完成事件
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 在主窗口标题显示版本
-            WindowTitle.Text = "Pixiv-Nginx 部署工具 " + Properties.Settings.Default.GUIVersion;
+            // 检查文件，当配置文件不存在时可以创建
+            CheckFiles();
+            // 读取程序信息
+            UpdateInfo();
             try
             {
                 // 异步获取 GitHub 的最新发布信息
-                string LatestReleaseInfo = await PublicHelper.GetAsync("https://api.github.com/repos/racpast/Pixiv-Nginx-GUI/releases/latest");
+                string LatestReleaseInfo = await GetAsync("https://api.github.com/repos/racpast/Pixiv-Nginx-GUI/releases/latest");
                 // 将返回的JSON字符串解析为JObject
                 JObject repodata = JObject.Parse(LatestReleaseInfo);
                 // 从解析后的JSON中获取最后一次发布的信息
                 string LatestReleaseTag = repodata["tag_name"].ToString();
                 string LatestReleasePublishedDt = repodata["published_at"].ToString();
                 // 比较当前安装的版本与最后一次发布的版本
-                if (LatestReleaseTag.ToUpper() != Properties.Settings.Default.GUIVersion)
+                if (LatestReleaseTag.ToUpper() != GUIVersion)
                 {
                     // 如果有新版本，则弹出提示框
                     HandyControl.Controls.MessageBox.Show($"Pixiv-Nginx-GUI 有新版本可用，请及时获取最新版本！\r\n版本号：{LatestReleaseTag.ToUpper()}\r\n发布时间(GMT)：{LatestReleasePublishedDt}", "主程序更新", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -341,30 +267,48 @@ namespace Pixiv_Nginx_GUI
                 HandyControl.Controls.MessageBox.Show($"检查更新时遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             // 检查应用程序的设置，判断是否为首次运行
-            if (Properties.Settings.Default.IsFirst)
+            if (IsFirst)
             {
-                // 如果是首次运行，则模拟点击“自动配置”按钮，这将触发AutoConfigBtn_Click方法中的逻辑
+                // 如果是首次运行，则模拟点击“自动配置”按钮，这将触发 AutoConfigBtn_Click 方法中的逻辑
                 // 注意：这里直接调用事件处理方法可能不是最佳实践，因为它绕过了事件系统
-                // 更好的做法是将AutoConfigBtn_Click中的逻辑封装到一个单独的方法中，并在这里调用该方法
+                // 更好的做法是将 AutoConfigBtn_Click 中的逻辑封装到一个单独的方法中，并在这里调用该方法
                 AutoConfigBtn_Click(this, e);
-                // 将设置中的IsFirst标记为false，表示不再是首次运行
-                Properties.Settings.Default.IsFirst = false;
-                // 保存设置，使更改生效
-                Properties.Settings.Default.Save();
+
+                // 将配置中的IsFirst标记为false，表示不再是首次运行
+                ConfigINI.INIWrite("程序信息", "IsFirst", "false", INIPath);
             }
             else
             {
-                // 如果不是首次运行，则检查文件
-                CheckFiles();
+                // 如果不是首次运行，则检查文件时关注是否有重要文件缺失
+                if (!CheckFiles())
+                {
+                    HandyControl.Controls.MessageBox.Show("检测到重要文件缺失，请通过重新自动部署解决该问题！","错误",MessageBoxButton.OK,MessageBoxImage.Warning);
+                }
             }
+            // 在主窗口标题显示版本
+            WindowTitle.Text = "Pixiv-Nginx 部署工具 " + GUIVersion;
             // 更新 Nginx 的状态信息
             UpdateNginxST();
             // 为 TabControl 的 SelectionChanged 事件添加事件处理程序，用户切换选项卡时，将调用 TabControl_SelectionChanged 方法
+            // 在这里才添加的原因是如果在xaml中添加，窗口加载完成时就会触发 TabControl_SelectionChanged ，而所选页面为主页时会 UpdateNginxST() ，此时 NginxST 为 Null
             tabcontrol.SelectionChanged += TabControl_SelectionChanged;
             // 启动用于定期更新 Nginx 的状态信息的定时器，
             _NginxStUpdateTimer.Start();
             // 显示当前 Pixiv-Nginx 版本的提交日期
-            VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + Properties.Settings.Default.CurrentVersionCommitDate;
+            if (CurrentVersionCommitDate == "")
+            {
+                VersionInfo.Text = "请先完成自动部署流程！";
+                CheckUpdateBtn.IsEnabled = false;
+                ChooseUpdateBtn.IsEnabled = false;
+                ChooseUpdateBtn.IsEnabled = false;
+            }
+            else
+            {
+                CheckUpdateBtn.IsEnabled = true;
+                ChooseUpdateBtn.IsEnabled = true;
+                ChooseUpdateBtn.IsEnabled = true;
+                VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
+            }
         }
 
         // 刷新状态按钮的点击事件
@@ -413,34 +357,7 @@ namespace Pixiv_Nginx_GUI
         {
             // 构建要执行的命令字符串，该命令用于检查配置文件，并在执行后暂停，然后退出
             string command = $"nginx -t -c \"{nginxConfigFile}\" & pause & exit";
-            // 创建一个ProcessStartInfo对象，用于配置如何启动一个进程
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                // 指定要启动的进程的文件名
-                FileName = "cmd.exe",
-                // 指定传递给cmd.exe的参数，/k表示执行完命令后保持窗口打开，\"{command}\"是要执行的命令
-                Arguments = $"/k \"{command}\"",
-                // 设置进程的工作目录
-                WorkingDirectory = NginxDirectory,
-                // 设置为true，表示使用操作系统shell来启动进程（默认行为）
-                UseShellExecute = true,
-                // 设置为false，表示不将进程的标准输出重定向到调用进程的输出流中
-                RedirectStandardOutput = false,
-                // 设置为false，表示不将进程的标准错误输出重定向到调用进程的错误输出流中
-                RedirectStandardError = false,
-                // 设置为false，表示启动进程时创建一个新窗口
-                CreateNoWindow = false
-            };
-            try
-            {
-                // 尝试启动进程
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                // 如果启动进程时发生异常，显示错误消息
-                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RunCMD(command,NginxDirectory);
         }
 
         // 重载配置按钮的点击事件
@@ -448,34 +365,7 @@ namespace Pixiv_Nginx_GUI
         {
             // 构建要执行的命令字符串，该命令用于重载配置文件，并在执行后暂停，然后退出
             string command = "nginx -s reload & pause & exit";
-            // 创建一个ProcessStartInfo对象，用于配置如何启动一个进程
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                // 指定要启动的进程的文件名
-                FileName = "cmd.exe",
-                // 指定传递给cmd.exe的参数，/k表示执行完命令后保持窗口打开，\"{command}\"是要执行的命令
-                Arguments = $"/k \"{command}\"",
-                // 设置进程的工作目录
-                WorkingDirectory = NginxDirectory,
-                // 设置为true，表示使用操作系统shell来启动进程（默认行为）
-                UseShellExecute = true,
-                // 设置为false，表示不将进程的标准输出重定向到调用进程的输出流中
-                RedirectStandardOutput = false,
-                // 设置为false，表示不将进程的标准错误输出重定向到调用进程的错误输出流中
-                RedirectStandardError = false,
-                // 设置为false，表示启动进程时创建一个新窗口
-                CreateNoWindow = false
-            };
-            try
-            {
-                // 尝试启动进程
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                // 如果启动进程时发生异常，显示错误消息
-                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RunCMD(command,NginxDirectory);
         }
 
         // 查看版本按钮的点击事件
@@ -483,34 +373,7 @@ namespace Pixiv_Nginx_GUI
         {
             // 构建要执行的命令字符串，该命令用于显示 Nginx 版本，并在执行后暂停，然后退出
             string command = "nginx -V & pause & exit";
-            // 创建一个ProcessStartInfo对象，用于配置如何启动一个进程
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                // 指定要启动的进程的文件名
-                FileName = "cmd.exe",
-                // 指定传递给cmd.exe的参数，/k表示执行完命令后保持窗口打开，\"{command}\"是要执行的命令
-                Arguments = $"/k \"{command}\"",
-                // 设置进程的工作目录
-                WorkingDirectory = NginxDirectory,
-                // 设置为true，表示使用操作系统shell来启动进程（默认行为）
-                UseShellExecute = true,
-                // 设置为false，表示不将进程的标准输出重定向到调用进程的输出流中
-                RedirectStandardOutput = false,
-                // 设置为false，表示不将进程的标准错误输出重定向到调用进程的错误输出流中
-                RedirectStandardError = false,
-                // 设置为false，表示启动进程时创建一个新窗口
-                CreateNoWindow = false
-            };
-            try
-            {
-                // 尝试启动进程
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                // 如果启动进程时发生异常，显示错误消息
-                HandyControl.Controls.MessageBox.Show($"遇到异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RunCMD(command ,NginxDirectory);
         }
 
         // 设置开机启动按钮的点击事件
@@ -599,7 +462,7 @@ namespace Pixiv_Nginx_GUI
             try
             {
                 // 异步获取 GitHub 仓库的最新提交信息
-                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
+                string RepoInfo = await GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
                 // 将返回的JSON字符串解析为JObject
                 JObject repodata = JObject.Parse(RepoInfo);
                 // 从解析后的JSON中获取最后一次提交的URL
@@ -607,7 +470,7 @@ namespace Pixiv_Nginx_GUI
                 // 在更新日志文本框中添加获取到的Commit信息URL
                 UpdateLogTb.Text += $"获取到最后一次Commit信息URL：{CommitInfoURL}\r\n";
                 // 异步获取最后一次提交的详细信息
-                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
+                string CommitInfo = await GetAsync(CommitInfoURL);
                 // 将返回的JSON字符串解析为JObject
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 从解析后的JSON中获取提交者的日期、SHA值以及提交信息
@@ -617,7 +480,7 @@ namespace Pixiv_Nginx_GUI
                 // 在更新日志文本框中添加获取到的Commit详细信息
                 UpdateLogTb.Text += $"获取到最后一次Commit信息：\r\nCommit SHA：{LCommitSHA}\r\n时间：{LCommitDT}\r\n内容：{LCommit}\r\n";
                 // 比较当前安装的版本与 GitHub 上的最新版本
-                if (DateTime.Parse(LCommitDT) != DateTime.Parse(Properties.Settings.Default.CurrentVersionCommitDate))
+                if (DateTime.Parse(LCommitDT) != DateTime.Parse(CurrentVersionCommitDate))
                 {
                     // 如果有新版本，则弹出提示框并启用更新按钮
                     HandyControl.Controls.MessageBox.Show($"Pixiv-Nginx 有新版本可用！\r\nCommit SHA：{LCommitSHA}\r\n时间：{LCommitDT}\r\n内容：{LCommit}", "更新", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -625,7 +488,7 @@ namespace Pixiv_Nginx_GUI
                     // 更新新版本信息
                     NewVersion = DateTime.Parse(LCommitDT).ToString();
                     // 在更新日志文本框中添加当前版本与新版本的信息
-                    UpdateLogTb.Text += $"当前版本Commit时间：{Properties.Settings.Default.CurrentVersionCommitDate}，Pixiv-Nginx 有新版本可用。\r\n";
+                    UpdateLogTb.Text += $"当前版本Commit时间：{CurrentVersionCommitDate}，Pixiv-Nginx 有新版本可用。\r\n";
                 }
                 else
                 {
@@ -655,7 +518,7 @@ namespace Pixiv_Nginx_GUI
             string ProxyUrl;
             UpdateBtn.Content = "寻找最优代理...";
             UpdateLogTb.Text += "开始寻找最优代理...";
-            string fastestproxy = await PublicHelper.FindFastestProxy(PublicHelper.proxies, fileUrl);
+            string fastestproxy = await FindFastestProxy(proxies, fileUrl);
             if (fastestproxy == "Mirror")
             {
                 ProxyUrl = "https://git.moezx.cc/mirrors/Pixiv-Nginx/archive/main.zip";
@@ -681,7 +544,7 @@ namespace Pixiv_Nginx_GUI
                 // 存储下载前更新日志文本框的内容以便持续更新进度
                 string TextBfDownload = UpdateLogTb.Text;
                 // 异步下载文件，并更新下载进度
-                await PublicHelper.DownloadFileAsync(ProxyUrl,
+                await DownloadFileAsync(ProxyUrl,
                                        destinationPath,
                                        new Progress<double>(progress =>
                                        {
@@ -704,20 +567,19 @@ namespace Pixiv_Nginx_GUI
                 UpdateBtn.Content = $"解压中...";
                 UpdateLogTb.Text += $"解压新版本压缩包...\r\n";
                 // 异步解压文件
-                await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(destinationPath, dataDirectory, false));
+                await System.Threading.Tasks.Task.Run(() => UnZip(destinationPath, dataDirectory, false));
                 // 镜像站与加速代理所下载的压缩包差异的处理
                 if (fastestproxy != "Mirror")
                 {
-                    PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                    RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
                 }
                 // 更新UI，表示文件解压完成
                 UpdateBtn.Content = $"解压完成";
                 UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
                 // 将新的版本号写入应用程序设置并保存
-                Properties.Settings.Default.CurrentVersionCommitDate = NewVersion;
-                Properties.Settings.Default.Save();
+                ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", NewVersion, INIPath);
                 // 显示当前 Pixiv-Nginx 版本的提交日期
-                VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + Properties.Settings.Default.CurrentVersionCommitDate;
+                VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
                 // 弹出窗口提示更新完成
                 HandyControl.Controls.MessageBox.Show("更新完成！", "更新", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -766,11 +628,11 @@ namespace Pixiv_Nginx_GUI
             if (openFileDialog.ShowDialog() == true)
             {
                 // 异步获取GitHub仓库的最新提交信息
-                string RepoInfo = await PublicHelper.GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
+                string RepoInfo = await GetAsync("https://api.github.com/repos/mashirozx/Pixiv-Nginx/git/refs/heads/main");
                 JObject repodata = JObject.Parse(RepoInfo);
                 string CommitInfoURL = repodata["object"]["url"].ToString();
                 // 异步获取提交详细信息
-                string CommitInfo = await PublicHelper.GetAsync(CommitInfoURL);
+                string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 获取提交的日期时间（GMT）
                 string LCommitDT = commitdata["committer"]["date"].ToString();
@@ -780,7 +642,7 @@ namespace Pixiv_Nginx_GUI
                 InputBox inputBox = new InputBox
                 {
                     // 设置提示文本，提示用户输入并显示最新版本的提交日期
-                    InitialText = $"从本地文件安装时，您需要为该版本指定 Commit 日期（GMT）。\r\n最新版本 Commit 日期：{DateTime.Parse(LCommitDT)}\r\n当前版本 Commit 日期：{DateTime.Parse(Properties.Settings.Default.CurrentVersionCommitDate)}",
+                    InitialText = $"从本地文件安装时，您需要为该版本指定 Commit 日期（GMT）。\r\n最新版本 Commit 日期：{DateTime.Parse(LCommitDT)}\r\n当前版本 Commit 日期：{DateTime.Parse(CurrentVersionCommitDate)}",
                     // 设置对话框标题
                     InitialTitle = "输入"
                 };
@@ -810,19 +672,18 @@ namespace Pixiv_Nginx_GUI
                         Directory.Delete(NginxDirectory, true);
                         UpdateLogTb.Text += $"解压新版本压缩包...\r\n";
                         // 在后台线程中解压文件
-                        await System.Threading.Tasks.Task.Run(() => PublicHelper.UnZip(filePath, dataDirectory, false));
+                        await System.Threading.Tasks.Task.Run(() => UnZip(filePath, dataDirectory, false));
                         // 镜像站与加速代理所下载的压缩包差异的处理
                         if (Directory.Exists(Path.Combine(dataDirectory, "Pixiv-Nginx-main")))
                         {
-                            PublicHelper.RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
+                            RenameDirectory(Path.Combine(dataDirectory, "Pixiv-Nginx-main"), NginxDirectory);
                         }
                         // 更新解压状态
                         UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
-                        // 将记录的新版本写入 Properties.Settings.Default.CurrentVersionCommitDate 并保存设置
-                        Properties.Settings.Default.CurrentVersionCommitDate = DateTime.Parse(inputBox.InputText).ToString();
-                        Properties.Settings.Default.Save();
+                        // 将记录的新版本写入配置文件
+                        ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", DateTime.Parse(inputBox.InputText).ToString(), INIPath);
                         // 显示当前 Pixiv-Nginx 版本的提交日期
-                        VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + Properties.Settings.Default.CurrentVersionCommitDate;
+                        VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
                         // 弹出窗口提示更新完成
                         HandyControl.Controls.MessageBox.Show("从本地更新完成！", "更新", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
@@ -861,7 +722,7 @@ namespace Pixiv_Nginx_GUI
             // 弹出窗口提示日志清理完成
             HandyControl.Controls.MessageBox.Show("日志清理完成！", "清理日志", MessageBoxButton.OK, MessageBoxImage.Information);
             // 更新清理日志按钮的内容，显示所有日志文件的总大小（以MB为单位）
-            DelLogBtn.Content = $"清理所有日志({GetTotalFileSizeInMB(filePaths)}MB)";
+            DelLogBtn.Content = $"清理所有日志({GetTotalFileSizeInMB(LogfilePaths)}MB)";
             // 清空日志文本框
             LogTb.Text = "";
             // 重新启用定期更新日志的计时器
@@ -916,7 +777,21 @@ namespace Pixiv_Nginx_GUI
                     _logUpdateTimer.Stop();
                     _NginxStUpdateTimer.Stop();
                     // 显示当前 Pixiv-Nginx 版本的提交日期
-                    VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + Properties.Settings.Default.CurrentVersionCommitDate;
+                    UpdateInfo();
+                    if (CurrentVersionCommitDate == "")
+                    {
+                        VersionInfo.Text = "请先完成自动部署流程！";
+                        CheckUpdateBtn.IsEnabled = false;
+                        ChooseUpdateBtn.IsEnabled = false;
+                        ChooseUpdateBtn.IsEnabled = false;
+                    }
+                    else
+                    {
+                        CheckUpdateBtn.IsEnabled = true;
+                        ChooseUpdateBtn.IsEnabled = true;
+                        ChooseUpdateBtn.IsEnabled = true;
+                        VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
+                    }
                     break;
             }
         }

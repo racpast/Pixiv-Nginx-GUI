@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/firstbkg.png"/>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg2.png"/>
         </Grid.Background>
         <Border Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
             <Border.BorderBrush>
@@ -180,11 +180,11 @@
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                     </TextBlock>
-                    <TextBlock Margin="50,0,50,0" TextWrapping="Wrap" Text="注意：点击“替换”会直接对原来的hosts文件进行替换，您之前所做过的特殊更改将会失效。&#x000A;如果您确定hosts文件与该项目的hosts文件不冲突（没有做过相关修改），那么请点击“追加”将文件内容直接追加到hosts。原来的hosts文件会留下一个名为hosts.bak的副本。" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                    <TextBlock Margin="50,0,50,0" TextWrapping="Wrap" Text="注意：&#x000A;点击“追加”根据文件内容和现有hosts，排除无关条目、修改有关条目并添加不存在条目。&#x000A;点击“替换”会直接对原来的hosts文件进行替换，您之前所做过的特殊更改将会失效。&#x000A;两个操作都会为原来的hosts文件会留下一个名为hosts.bak的备份。" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush EndPoint="1,0">
                                 <GradientStop Color="#FF37CDFF"/>
-                                <GradientStop Color="#FFFDFF00" Offset="1"/>
+                                <GradientStop Color="#FF0033FF" Offset="1"/>
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                     </TextBlock>

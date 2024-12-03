@@ -201,10 +201,10 @@
     <Resource Include="nginxwarn.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="mainbkg.png" />
+    <Resource Include="Bkg1.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="firstbkg.png" />
+    <Resource Include="Bkg2.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
