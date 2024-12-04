@@ -123,7 +123,7 @@ namespace Pixiv_Nginx_GUI
             {
                 ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", "", INIPath);
                 ConfigINI.INIWrite("程序信息", "IsFirst", "true", INIPath);
-                ConfigINI.INIWrite("程序信息", "GUIVersion", "V1.3", INIPath);
+                ConfigINI.INIWrite("程序信息", "GUIVersion", "V1.3.1", INIPath);
             }
             // 遍历重要文件路径数组
             foreach (var filePath in ImportantfilePaths)
