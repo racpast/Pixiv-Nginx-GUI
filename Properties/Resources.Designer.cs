@@ -69,5 +69,35 @@ namespace Pixiv_Nginx_GUI.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] ca_cer {
+            get {
+                object obj = ResourceManager.GetObject("ca_cer", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] pixiv_net_crt {
+            get {
+                object obj = ResourceManager.GetObject("pixiv_net_crt", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] pixiv_net_key {
+            get {
+                object obj = ResourceManager.GetObject("pixiv_net_key", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

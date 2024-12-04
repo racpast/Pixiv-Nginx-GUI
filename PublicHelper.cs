@@ -23,7 +23,13 @@ namespace Pixiv_Nginx_GUI
         public static string OldNginxDirectory = Path.Combine(dataDirectory, "pixiv-nginx.old");
         public static string nginxPath = Path.Combine(NginxDirectory, "nginx.exe");
         public static string nginxConfigFile = Path.Combine(NginxDirectory, "conf", "nginx.conf");
-        public static string CERFile = Path.Combine(NginxDirectory, "ca.cer");
+        public static string CERFile = Path.Combine(dataDirectory, "ca.cer");
+        public static string CRTFile = Path.Combine(dataDirectory, "pixiv.net.crt");
+        public static string KeyFile = Path.Combine(dataDirectory, "pixiv.net.key");
+        public static string CADirectory = Path.Combine(NginxDirectory, "conf", "ca");
+        public static string OldCERFile = Path.Combine(CADirectory, "ca.cer");
+        public static string OldCRTFile = Path.Combine(CADirectory, "pixiv.net.crt");
+        public static string OldKeyFile = Path.Combine(CADirectory, "pixiv.net.key");
         public static string hostsFile = Path.Combine(NginxDirectory, "hosts");
         public static string nginxLogPath = Path.Combine(NginxDirectory, "logs");
         public static string nginxLog1Path = Path.Combine(nginxLogPath, "access.log");
@@ -478,7 +484,7 @@ namespace Pixiv_Nginx_GUI
                 // 每次从ini中读取多少字节
                 System.Text.StringBuilder temp = new System.Text.StringBuilder(255);
 
-                // section=配置节点名称，key=键名，temp=上面，path=路径
+                // section=配置节点名称，key = 键名，temp = 上面，path = 路径
                 GetPrivateProfileString(section, key, "", temp, 255, path);
                 return temp.ToString();
 
@@ -526,39 +532,110 @@ namespace Pixiv_Nginx_GUI
         // 更新 hosts 文件的类
         public class WriteHosts
         {
-            // 排除无关条目、修改有关条目并添加不存在条目
-            public static void AppendHosts(string hostsPath,string newHostsPath)
+            public static void AppendSingleRecord(string hostsPath,string ip,string domain)
             {
-                // 读取追加的 hosts 文件内容
-                var newHosts = ReadHostsFile(newHostsPath);
-                // 读取现有的 hosts 文件内容
-                var existingHosts = ReadHostsFile(hostsPath);
-                // 删除在需要追加的 hosts 出现过的域名的条目
-                var updatedHosts = existingHosts
-                    .Where(line => !newHosts.Any(newHost => newHost.domain.Equals(line.domain, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-                // 添加newhosts的内容到updatedHosts列表末尾
-                updatedHosts.AddRange(newHosts);
-                // 将更新后的内容写回 hosts 文件
-                WriteHostsFile(hostsPath, updatedHosts);
+                try
+                {
+                    // 读取现有的 hosts 和追加的 hosts
+                    var existingHosts = ReadHostsFile(hostsPath);
+                    var newHosts = new List<(string ip, string domain)>();
+
+                    // 对某些网站做额外的访问支持
+                    newHosts.Add((ip, domain));
+
+                    // 获取新条目中的域名
+                    var newDomains = new HashSet<string>(newHosts.Select(h => h.domain), StringComparer.OrdinalIgnoreCase);
+
+                    // 从现有条目中排除掉新条目中出现过的域名
+                    var updatedHosts = existingHosts
+                        .Where(h => !newDomains.Contains(h.domain))
+                        .ToList();
+
+                    // 将追加文件中的条目合并到更新后的列表
+                    updatedHosts.AddRange(newHosts);
+
+                    // 写回结果到 hosts 文件
+                    WriteHostsFile(hostsPath, updatedHosts);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+            }
+            public static void AppendHosts(string hostsPath, string newHostsPath)
+            {
+                try
+                {
+                    // 读取现有的 hosts 和追加的 hosts
+                    var existingHosts = ReadHostsFile(hostsPath);
+                    var newHosts = ReadHostsFile(newHostsPath);
+
+                    // 获取新条目中的域名
+                    var newDomains = new HashSet<string>(newHosts.Select(h => h.domain), StringComparer.OrdinalIgnoreCase);
+
+                    // 从现有条目中排除掉新条目中出现过的域名
+                    var updatedHosts = existingHosts
+                        .Where(h => !newDomains.Contains(h.domain))
+                        .ToList();
+
+                    // 将追加文件中的条目合并到更新后的列表
+                    updatedHosts.AddRange(newHosts);
+
+                    // 写回结果到 hosts 文件
+                    WriteHostsFile(hostsPath, updatedHosts);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
             }
 
-            static List<(string ip, string domain)> ReadHostsFile(string path)
+            // 读取 hosts 文件，解析为 (IP, domain) 形式
+            private static List<(string ip, string domain)> ReadHostsFile(string path)
             {
                 var hosts = new List<(string ip, string domain)>();
-                var regex = new Regex(@"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+(.*)$", RegexOptions.Multiline);
-                foreach (Match match in regex.Matches(File.ReadAllText(path)))
+                var regex = new Regex(@"^(\d{1,3}(?:\.\d{1,3}){3})\s+(.+)$", RegexOptions.Multiline);
+                try
                 {
-                    hosts.Add((match.Groups[1].Value.Trim(), match.Groups[2].Value.Trim()));
+                    foreach (Match match in regex.Matches(File.ReadAllText(path)))
+                    {
+                        hosts.Add((match.Groups[1].Value.Trim(), match.Groups[2].Value.Trim()));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
                 }
                 return hosts;
             }
 
-            static void WriteHostsFile(string path, List<(string ip, string domain)> hosts)
+            // 写回 hosts 文件
+            private static void WriteHostsFile(string path, List<(string ip, string domain)> hosts)
             {
-                var content = string.Join(Environment.NewLine, hosts.Select(host => $"{host.ip}{new string(' ', 8 - host.ip.Length % 8)}{host.domain}"));
-                File.WriteAllText(path, content);
+                try
+                {
+                    var content = string.Join(Environment.NewLine, hosts.Select(h => $"{h.ip}\t\t{h.domain}"));
+                    File.WriteAllText(path, content);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
             }
+        }
+
+        /// <summary>
+        /// 释放resx里面的普通类型文件
+        /// </summary>
+        /// <param name="resource">resx里面的资源</param>
+        /// <param name="path">释放到的路径</param>
+        public static void ExtractNormalFileInResx(byte[] resource, String path)
+        {
+            FileStream file = new FileStream(path, FileMode.Create);
+            file.Write(resource, 0, resource.Length);
+            file.Flush();
+            file.Close();
         }
     }
 }

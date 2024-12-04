@@ -3,6 +3,7 @@ using Microsoft.Win32.TaskScheduler;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -123,7 +124,20 @@ namespace Pixiv_Nginx_GUI
             {
                 ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", "", INIPath);
                 ConfigINI.INIWrite("程序信息", "IsFirst", "true", INIPath);
-                ConfigINI.INIWrite("程序信息", "GUIVersion", "V1.3.1", INIPath);
+                ConfigINI.INIWrite("程序信息", "GUIVersion", "V1.4", INIPath);
+            }
+            // 释放证书文件待用
+            if (!File.Exists(CERFile))
+            {
+                ExtractNormalFileInResx(Properties.Resources.ca_cer, CERFile);
+            }
+            if (!File.Exists(CRTFile))
+            {
+                ExtractNormalFileInResx(Properties.Resources.pixiv_net_crt, CRTFile);
+            }
+            if (!File.Exists(KeyFile))
+            {
+                ExtractNormalFileInResx(Properties.Resources.pixiv_net_key, KeyFile);
             }
             // 遍历重要文件路径数组
             foreach (var filePath in ImportantfilePaths)
@@ -474,7 +488,10 @@ namespace Pixiv_Nginx_GUI
                 // 将返回的JSON字符串解析为JObject
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 从解析后的JSON中获取提交者的日期、SHA值以及提交信息
-                string LCommitDT = commitdata["committer"]["date"].ToString();
+                // 注意：dateToken 所返回的格式受系统设置影响，这里需要转换为标准格式（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
+                JToken dateToken = commitdata["committer"]["date"];
+                DateTime dateTime = dateToken.ToObject<DateTime>(); // 或者使用 (DateTime)dateToken 如果确定它是 DateTime 类型
+                string LCommitDT = dateTime.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
                 string LCommitSHA = commitdata["sha"].ToString();
                 string LCommit = commitdata["message"].ToString();
                 // 在更新日志文本框中添加获取到的Commit详细信息
@@ -486,7 +503,7 @@ namespace Pixiv_Nginx_GUI
                     HandyControl.Controls.MessageBox.Show($"Pixiv-Nginx 有新版本可用！\r\nCommit SHA：{LCommitSHA}\r\n时间：{LCommitDT}\r\n内容：{LCommit}", "更新", MessageBoxButton.OK, MessageBoxImage.Information);
                     UpdateBtn.IsEnabled = true;
                     // 更新新版本信息
-                    NewVersion = DateTime.Parse(LCommitDT).ToString();
+                    NewVersion = LCommitDT;
                     // 在更新日志文本框中添加当前版本与新版本的信息
                     UpdateLogTb.Text += $"当前版本Commit时间：{CurrentVersionCommitDate}，Pixiv-Nginx 有新版本可用。\r\n";
                 }
@@ -576,6 +593,37 @@ namespace Pixiv_Nginx_GUI
                 // 更新UI，表示文件解压完成
                 UpdateBtn.Content = $"解压完成";
                 UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
+                // 替换所有 CA
+                File.Copy(CERFile, OldCERFile, overwrite: true);
+                File.Copy(CRTFile, OldCRTFile, overwrite: true);
+                File.Copy(KeyFile, OldKeyFile, overwrite: true);
+                try
+                {
+                    // 检测 hosts 文件是否存在
+                    if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts"))
+                    {
+                        // 存在则备份 hosts 文件
+                        File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts", "C:\\Windows\\System32\\drivers\\etc\\hosts.bak", true);
+                        // 排除无关条目、修改有关条目并添加不存在条目
+                        WriteHosts.AppendHosts("C:\\Windows\\System32\\drivers\\etc\\hosts", hostsFile);
+                    }
+                    else
+                    {
+                        // 不存在则直接复制 hosts 文件
+                        File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
+                    }
+                    // 某站的支持
+                    WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "nyaa.si");
+                    WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "sukebei.nyaa.si");
+                    // 刷新 DNS 缓存
+                    string command = "ipconfig /flushdns & pause & exit";
+                    RunCMD(command);
+                }
+                catch (IOException iox)
+                {
+                    // 如果在操作 hosts 过程中发生异常，则显示错误消息框
+                    HandyControl.Controls.MessageBox.Show($"操作hosts时出错：\r\n{iox.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 // 将新的版本号写入应用程序设置并保存
                 ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", NewVersion, INIPath);
                 UpdateInfo();
@@ -637,7 +685,10 @@ namespace Pixiv_Nginx_GUI
                 string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 获取提交的日期时间（GMT）
-                string LCommitDT = commitdata["committer"]["date"].ToString();
+                // 注意：dateToken 所返回的格式受系统设置影响，这里需要转换为标准格式（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
+                JToken dateToken = commitdata["committer"]["date"];
+                DateTime dateTime = dateToken.ToObject<DateTime>(); // 或者使用 (DateTime)dateToken 如果确定它是 DateTime 类型
+                string LCommitDT = dateTime.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
                 // 获取用户选择的ZIP文件路径
                 string filePath = openFileDialog.FileName;
                 // 创建一个输入框对话框，提示用户输入提交日期
@@ -682,6 +733,37 @@ namespace Pixiv_Nginx_GUI
                         }
                         // 更新解压状态
                         UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
+                        // 替换所有 CA
+                        File.Copy(CERFile, OldCERFile, overwrite: true);
+                        File.Copy(CRTFile, OldCRTFile, overwrite: true);
+                        File.Copy(KeyFile, OldKeyFile, overwrite: true);
+                        try
+                        {
+                            // 检测 hosts 文件是否存在
+                            if (File.Exists("C:\\Windows\\System32\\drivers\\etc\\hosts"))
+                            {
+                                // 存在则备份 hosts 文件
+                                File.Copy("C:\\Windows\\System32\\drivers\\etc\\hosts", "C:\\Windows\\System32\\drivers\\etc\\hosts.bak", true);
+                                // 排除无关条目、修改有关条目并添加不存在条目
+                                WriteHosts.AppendHosts("C:\\Windows\\System32\\drivers\\etc\\hosts", hostsFile);
+                            }
+                            else
+                            {
+                                // 不存在则直接复制 hosts 文件
+                                File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
+                            }
+                            // 某站的支持
+                            WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "nyaa.si");
+                            WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "sukebei.nyaa.si");
+                            // 刷新 DNS 缓存
+                            string command = "ipconfig /flushdns & pause & exit";
+                            RunCMD(command);
+                        }
+                        catch (IOException iox)
+                        {
+                            // 如果在操作 hosts 过程中发生异常，则显示错误消息框
+                            HandyControl.Controls.MessageBox.Show($"操作hosts时出错：\r\n{iox.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                         // 将记录的新版本写入配置文件
                         ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", DateTime.Parse(inputBox.InputText).ToString(), INIPath);
                         // 显示当前 Pixiv-Nginx 版本的提交日期

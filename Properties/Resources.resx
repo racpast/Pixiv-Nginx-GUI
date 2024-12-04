@@ -121,4 +121,13 @@
   <data name="AaManYuShouXieTi_JianFan__2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\AaManYuShouXieTi(JianFan)-2.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="ca_cer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ca.cer;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="pixiv_net_crt" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\pixiv.net.crt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="pixiv_net_key" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\pixiv.net.key;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

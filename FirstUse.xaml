@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg2.png"/>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg4.jpg" Opacity="1"/>
         </Grid.Background>
         <Border Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
             <Border.BorderBrush>

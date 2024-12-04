@@ -1,0 +1,133 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=CN, ST=Sichuan, L=Chengdu, O=Racpast Ltd, CN=Racpast Internet Fake Authority CA
+        Validity
+            Not Before: Dec  4 20:10:10 2024 GMT
+            Not After : Dec  2 20:10:10 2034 GMT
+        Subject: C=CN, ST=Sichuan, L=Chengdu, O=Racpast Ltd, CN=Racpast Internet Fake Authority CA
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:96:de:97:ed:07:65:8e:a4:ba:4a:24:1d:81:d3:
+                    b9:57:19:c0:91:3e:e2:0c:82:e3:2b:af:bb:0a:5e:
+                    f4:ff:4f:eb:22:88:1d:44:f7:b9:4b:cb:f1:f9:72:
+                    1e:ff:8e:8b:a3:81:1a:ee:77:98:29:49:b8:03:c1:
+                    30:ad:9f:47:82:f4:15:6d:5e:71:4b:13:d3:e1:8b:
+                    d4:b2:4c:5f:de:45:c4:52:25:be:74:21:7f:22:ea:
+                    44:a9:1c:3c:f7:ce:a3:f7:6d:c0:73:22:21:e1:f8:
+                    d6:0b:65:10:8f:4a:9b:a5:2b:3f:57:9a:7d:a8:4d:
+                    9c:c5:1f:32:e4:48:2a:46:3e:1f:c7:6c:f0:06:1d:
+                    8c:51:ea:15:d5:99:f7:75:33:cf:9e:b5:64:00:2a:
+                    09:7a:e1:0e:64:f6:00:3e:40:0a:17:86:00:43:a0:
+                    41:be:2b:ab:07:c5:31:80:52:58:ca:24:3a:43:d5:
+                    84:52:9c:b9:d2:25:dd:69:76:8f:e3:6a:75:99:9d:
+                    a1:26:36:0e:7b:7b:8e:e6:8f:24:99:6f:ed:bd:6b:
+                    a7:9c:e6:98:16:43:cd:58:3e:81:43:3d:e7:dd:bc:
+                    1d:92:a1:57:90:ed:59:f4:93:89:7d:f4:ef:53:29:
+                    fa:ac:d3:fa:c1:eb:91:5c:fe:cd:aa:24:5f:37:76:
+                    de:91
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: 
+                Digital Signature
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Subject Alternative Name: 
+                DNS:*.pixiv.net, DNS:pixiv.net, DNS:*.secure.pixiv.net, DNS:pixivision.net, DNS:*.pixivision.net, DNS:pixiv.me, DNS:*.pixiv.me, DNS:pximg.net, DNS:*.pximg.net, DNS:pixivsketch.net, DNS:*.pixivsketch.net, DNS:public-api.secure.pixiv.net, DNS:wikipedia.org, DNS:*.wikipedia.org, DNS:m.wikipedia.org, DNS:*.m.wikipedia.org, DNS:google.com, DNS:*.google.com, DNS:archiveofourown.org, DNS:*.archiveofourown.org, DNS:nyaa.si, DNS:*.nyaa.si, DNS:wikimedia.org, DNS:*.wikimedia.org, DNS:exhentai.org, DNS:*.exhentai.org, DNS:e-hentai.org, DNS:*.e-hentai.org, DNS:ehgt.org, DNS:discordapp.com, DNS:*.discordapp.com, DNS:discordapp.net, DNS:*.discordapp.net, DNS:discord.com, DNS:*.discord.com, DNS:discord.gg, DNS:*.discord.gg, DNS:ext-twitch.tv, DNS:*.ext-twitch.tv, DNS:twitch.tv, DNS:*.twitch.tv, DNS:ubi.com, DNS:*.ubi.com, DNS:mega.co.nz, DNS:*.mega.co.nz, DNS:mega.nz, DNS:*.mega.nz, DNS:mega.io, DNS:*.mega.io, DNS:steamcommunity.com, DNS:*.steamcommunity.com, DNS:steampowered.com, DNS:*.steampowered.com, DNS:*.steamstatic.com, DNS:*.akamai.steamstatic.com, DNS:akamaihd.net, DNS:*.akamaihd.net, DNS:*.akamaized.net, DNS:*.akamaiedge.net, DNS:www.dlsite.com, DNS:download.dlsite.com, DNS:*.dlsite.com, DNS:*.origin.com, DNS:*.ea.com, DNS:githubusercontent.com, DNS:*.githubusercontent.com, DNS:github.com, DNS:*.github.com, DNS:patreon.com, DNS:*.patreon.com, DNS:patreonusercontent.com, DNS:*.patreonusercontent.com, DNS:fanbox.cc, DNS:downloads.fanbox.cc, DNS:*.fanbox.cc, DNS:*.ggpht.com, DNS:githubassets.com, DNS:*.githubassets.com, DNS:*.googlevideo.com, DNS:*.freenom.com, DNS:*.steam-chat.com, DNS:steam-chat.com, DNS:*.twitter.com, DNS:twitter.com, DNS:twimg.com, DNS:*.twimg.com, DNS:t.co, DNS:apkpure.com, DNS:*.apkpure.com, DNS:nhentai.net, DNS:*.nhentai.net, DNS:*.SharePoint.com, DNS:iwara.tv, DNS:*.iwara.tv, DNS:paypal.com, DNS:*.paypal.com, DNS:paypalobjects.com, DNS:*.paypalobjects.com, DNS:*.cloudflare.steamstatic.com, DNS:Instagram.com, DNS:*.Instagram.com, DNS:*.*.Instagram.com, DNS:*.*.*.Instagram.com, DNS:*.ig.me, DNS:ig.me, DNS:*.instagr.am, DNS:instagr.am, DNS:*.cdninstagram.com, DNS:guangdongvideo.com, DNS:*.guangdongvideo.com, DNS:fc2.com, DNS:*.live.fc2.com, DNS:*.fc2.com, DNS:*.google.ru, DNS:*.bilivideo.cn, DNS:*.bilivideo.com, DNS:*.steamserver.net, DNS:*.exhentai.org, DNS:wixmp.com, DNS:*.wixmp.com, DNS:ci-en.jp, DNS:*.ci-en.jp, DNS:reddit.com, DNS:*.reddit.com, DNS:redd.it, DNS:*.redd.it, DNS:redditstatic.com, DNS:*.redditstatic.com, DNS:redditmedia.com, DNS:*.redditmedia.com, DNS:*.thumbs.redditmedia.com, DNS:wallhaven.cc, DNS:*.wallhaven.cc, DNS:x.com, DNS:*.x.com, DNS:facebook.com, DNS:*.facebook.com, DNS:facebook.net, DNS:*.facebook.net, DNS:fbsbx.com, DNS:*.fbsbx.com, DNS:fbcdn.net, DNS:*.fbcdn.net, DNS:*.xx.fbcdn.net, DNS:imgur.com, DNS:*.imgur.com
+            X509v3 Subject Key Identifier: 
+                49:BE:78:3A:B1:44:86:EF:54:9A:56:E6:FC:A6:97:2A:0A:F0:63:D7
+            X509v3 Authority Key Identifier: 
+                7F:C6:13:FF:C5:E3:98:FA:72:58:28:15:C4:1C:CE:A5:01:1A:86:AA
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        17:03:4c:ec:d6:56:84:22:f0:fe:2e:a0:f5:7d:f5:9e:92:33:
+        75:61:80:0e:1a:2b:ae:99:74:b1:e3:0f:09:e8:1a:bc:f6:c2:
+        f1:5a:b8:b0:fd:e6:06:a5:b3:e7:45:19:de:d6:69:6f:21:4a:
+        db:d9:57:ac:88:d4:92:fb:49:5a:07:e1:29:ce:56:5c:1b:d9:
+        a4:04:28:07:60:06:7c:31:ab:e9:b4:ca:ac:0f:c3:8e:9c:1f:
+        0d:cc:89:69:b5:f5:b4:54:ac:3e:a8:50:13:95:ba:1e:c3:fd:
+        e9:28:86:4e:66:8d:43:66:82:04:2a:08:4e:3b:c3:99:df:d4:
+        4d:e7:9e:08:b9:96:45:66:86:c0:a2:51:a3:4a:b3:0f:b4:1d:
+        54:1c:ca:47:5f:5f:fa:7d:ea:06:10:5e:7e:77:10:ab:fa:ce:
+        c7:75:ef:ec:47:23:8e:80:b4:52:dd:b4:52:74:29:69:1a:20:
+        60:1a:a1:a2:db:66:3a:e7:3a:15:2f:94:27:fe:29:5a:39:2d:
+        e4:3a:fe:b0:88:29:ab:99:7e:12:6b:a5:ff:3c:fb:5b:22:06:
+        f6:1a:74:55:81:a4:2b:39:61:ab:e0:e0:fc:ec:f1:73:95:5e:
+        c4:b6:04:ba:65:3b:73:e9:e5:9e:09:9b:19:1a:fd:92:36:04:
+        25:94:33:d2
+-----BEGIN CERTIFICATE-----
+MIIMoDCCC4igAwIBAgIBATANBgkqhkiG9w0BAQsFADB0MQswCQYDVQQGEwJDTjEQ
+MA4GA1UECAwHU2ljaHVhbjEQMA4GA1UEBwwHQ2hlbmdkdTEUMBIGA1UECgwLUmFj
+cGFzdCBMdGQxKzApBgNVBAMMIlJhY3Bhc3QgSW50ZXJuZXQgRmFrZSBBdXRob3Jp
+dHkgQ0EwHhcNMjQxMjA0MjAxMDEwWhcNMzQxMjAyMjAxMDEwWjB0MQswCQYDVQQG
+EwJDTjEQMA4GA1UECAwHU2ljaHVhbjEQMA4GA1UEBwwHQ2hlbmdkdTEUMBIGA1UE
+CgwLUmFjcGFzdCBMdGQxKzApBgNVBAMMIlJhY3Bhc3QgSW50ZXJuZXQgRmFrZSBB
+dXRob3JpdHkgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCW3pft
+B2WOpLpKJB2B07lXGcCRPuIMguMrr7sKXvT/T+siiB1E97lLy/H5ch7/joujgRru
+d5gpSbgDwTCtn0eC9BVtXnFLE9Phi9SyTF/eRcRSJb50IX8i6kSpHDz3zqP3bcBz
+IiHh+NYLZRCPSpulKz9Xmn2oTZzFHzLkSCpGPh/HbPAGHYxR6hXVmfd1M8+etWQA
+Kgl64Q5k9gA+QAoXhgBDoEG+K6sHxTGAUljKJDpD1YRSnLnSJd1pdo/janWZnaEm
+Ng57e47mjySZb+29a6ec5pgWQ81YPoFDPefdvB2SoVeQ7Vn0k4l99O9TKfqs0/rB
+65Fc/s2qJF83dt6RAgMBAAGjggk7MIIJNzALBgNVHQ8EBAMCB4AwHQYDVR0lBBYw
+FAYIKwYBBQUHAwEGCCsGAQUFBwMCMAkGA1UdEwQCMAAwggi8BgNVHREEggizMIII
+r4ILKi5waXhpdi5uZXSCCXBpeGl2Lm5ldIISKi5zZWN1cmUucGl4aXYubmV0gg5w
+aXhpdmlzaW9uLm5ldIIQKi5waXhpdmlzaW9uLm5ldIIIcGl4aXYubWWCCioucGl4
+aXYubWWCCXB4aW1nLm5ldIILKi5weGltZy5uZXSCD3BpeGl2c2tldGNoLm5ldIIR
+Ki5waXhpdnNrZXRjaC5uZXSCG3B1YmxpYy1hcGkuc2VjdXJlLnBpeGl2Lm5ldIIN
+d2lraXBlZGlhLm9yZ4IPKi53aWtpcGVkaWEub3Jngg9tLndpa2lwZWRpYS5vcmeC
+ESoubS53aWtpcGVkaWEub3Jnggpnb29nbGUuY29tggwqLmdvb2dsZS5jb22CE2Fy
+Y2hpdmVvZm91cm93bi5vcmeCFSouYXJjaGl2ZW9mb3Vyb3duLm9yZ4IHbnlhYS5z
+aYIJKi5ueWFhLnNpgg13aWtpbWVkaWEub3Jngg8qLndpa2ltZWRpYS5vcmeCDGV4
+aGVudGFpLm9yZ4IOKi5leGhlbnRhaS5vcmeCDGUtaGVudGFpLm9yZ4IOKi5lLWhl
+bnRhaS5vcmeCCGVoZ3Qub3Jngg5kaXNjb3JkYXBwLmNvbYIQKi5kaXNjb3JkYXBw
+LmNvbYIOZGlzY29yZGFwcC5uZXSCECouZGlzY29yZGFwcC5uZXSCC2Rpc2NvcmQu
+Y29tgg0qLmRpc2NvcmQuY29tggpkaXNjb3JkLmdnggwqLmRpc2NvcmQuZ2eCDWV4
+dC10d2l0Y2gudHaCDyouZXh0LXR3aXRjaC50doIJdHdpdGNoLnR2ggsqLnR3aXRj
+aC50doIHdWJpLmNvbYIJKi51YmkuY29tggptZWdhLmNvLm56ggwqLm1lZ2EuY28u
+bnqCB21lZ2EubnqCCSoubWVnYS5ueoIHbWVnYS5pb4IJKi5tZWdhLmlvghJzdGVh
+bWNvbW11bml0eS5jb22CFCouc3RlYW1jb21tdW5pdHkuY29tghBzdGVhbXBvd2Vy
+ZWQuY29tghIqLnN0ZWFtcG93ZXJlZC5jb22CESouc3RlYW1zdGF0aWMuY29tghgq
+LmFrYW1haS5zdGVhbXN0YXRpYy5jb22CDGFrYW1haWhkLm5ldIIOKi5ha2FtYWlo
+ZC5uZXSCDyouYWthbWFpemVkLm5ldIIQKi5ha2FtYWllZGdlLm5ldIIOd3d3LmRs
+c2l0ZS5jb22CE2Rvd25sb2FkLmRsc2l0ZS5jb22CDCouZGxzaXRlLmNvbYIMKi5v
+cmlnaW4uY29tgggqLmVhLmNvbYIVZ2l0aHVidXNlcmNvbnRlbnQuY29tghcqLmdp
+dGh1YnVzZXJjb250ZW50LmNvbYIKZ2l0aHViLmNvbYIMKi5naXRodWIuY29tggtw
+YXRyZW9uLmNvbYINKi5wYXRyZW9uLmNvbYIWcGF0cmVvbnVzZXJjb250ZW50LmNv
+bYIYKi5wYXRyZW9udXNlcmNvbnRlbnQuY29tgglmYW5ib3guY2OCE2Rvd25sb2Fk
+cy5mYW5ib3guY2OCCyouZmFuYm94LmNjggsqLmdncGh0LmNvbYIQZ2l0aHViYXNz
+ZXRzLmNvbYISKi5naXRodWJhc3NldHMuY29tghEqLmdvb2dsZXZpZGVvLmNvbYIN
+Ki5mcmVlbm9tLmNvbYIQKi5zdGVhbS1jaGF0LmNvbYIOc3RlYW0tY2hhdC5jb22C
+DSoudHdpdHRlci5jb22CC3R3aXR0ZXIuY29tggl0d2ltZy5jb22CCyoudHdpbWcu
+Y29tggR0LmNvggthcGtwdXJlLmNvbYINKi5hcGtwdXJlLmNvbYILbmhlbnRhaS5u
+ZXSCDSoubmhlbnRhaS5uZXSCECouU2hhcmVQb2ludC5jb22CCGl3YXJhLnR2ggoq
+Lml3YXJhLnR2ggpwYXlwYWwuY29tggwqLnBheXBhbC5jb22CEXBheXBhbG9iamVj
+dHMuY29tghMqLnBheXBhbG9iamVjdHMuY29tghwqLmNsb3VkZmxhcmUuc3RlYW1z
+dGF0aWMuY29tgg1JbnN0YWdyYW0uY29tgg8qLkluc3RhZ3JhbS5jb22CESouKi5J
+bnN0YWdyYW0uY29tghMqLiouKi5JbnN0YWdyYW0uY29tggcqLmlnLm1lggVpZy5t
+ZYIMKi5pbnN0YWdyLmFtggppbnN0YWdyLmFtghIqLmNkbmluc3RhZ3JhbS5jb22C
+Emd1YW5nZG9uZ3ZpZGVvLmNvbYIUKi5ndWFuZ2Rvbmd2aWRlby5jb22CB2ZjMi5j
+b22CDioubGl2ZS5mYzIuY29tggkqLmZjMi5jb22CCyouZ29vZ2xlLnJ1gg4qLmJp
+bGl2aWRlby5jboIPKi5iaWxpdmlkZW8uY29tghEqLnN0ZWFtc2VydmVyLm5ldIIO
+Ki5leGhlbnRhaS5vcmeCCXdpeG1wLmNvbYILKi53aXhtcC5jb22CCGNpLWVuLmpw
+ggoqLmNpLWVuLmpwggpyZWRkaXQuY29tggwqLnJlZGRpdC5jb22CB3JlZGQuaXSC
+CSoucmVkZC5pdIIQcmVkZGl0c3RhdGljLmNvbYISKi5yZWRkaXRzdGF0aWMuY29t
+gg9yZWRkaXRtZWRpYS5jb22CESoucmVkZGl0bWVkaWEuY29tghgqLnRodW1icy5y
+ZWRkaXRtZWRpYS5jb22CDHdhbGxoYXZlbi5jY4IOKi53YWxsaGF2ZW4uY2OCBXgu
+Y29tggcqLnguY29tggxmYWNlYm9vay5jb22CDiouZmFjZWJvb2suY29tggxmYWNl
+Ym9vay5uZXSCDiouZmFjZWJvb2submV0gglmYnNieC5jb22CCyouZmJzYnguY29t
+gglmYmNkbi5uZXSCCyouZmJjZG4ubmV0gg4qLnh4LmZiY2RuLm5ldIIJaW1ndXIu
+Y29tggsqLmltZ3VyLmNvbTAdBgNVHQ4EFgQUSb54OrFEhu9Umlbm/KaXKgrwY9cw
+HwYDVR0jBBgwFoAUf8YT/8XjmPpyWCgVxBzOpQEahqowDQYJKoZIhvcNAQELBQAD
+ggEBABcDTOzWVoQi8P4uoPV99Z6SM3VhgA4aK66ZdLHjDwnoGrz2wvFauLD95gal
+s+dFGd7WaW8hStvZV6yI1JL7SVoH4SnOVlwb2aQEKAdgBnwxq+m0yqwPw46cHw3M
+iWm19bRUrD6oUBOVuh7D/ekohk5mjUNmggQqCE47w5nf1E3nngi5lkVmhsCiUaNK
+sw+0HVQcykdfX/p96gYQXn53EKv6zsd17+xHI46AtFLdtFJ0KWkaIGAaoaLbZjrn
+OhUvlCf+KVo5LeQ6/rCIKauZfhJrpf88+1siBvYadFWBpCs5Yavg4Pzs8XOVXsS2
+BLplO3Pp5Z4Jmxka/ZI2BCWUM9I=
+-----END CERTIFICATE-----

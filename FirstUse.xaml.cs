@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -65,7 +66,10 @@ namespace Pixiv_Nginx_GUI
                 string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 提取最后一次提交的日期
-                string LCommitDT = commitdata["committer"]["date"].ToString();
+                // 注意：dateToken 所返回的格式受系统设置影响，这里需要转换为标准格式（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
+                JToken dateToken = commitdata["committer"]["date"];
+                DateTime dateTime = dateToken.ToObject<DateTime>(); // 或者使用 (DateTime)dateToken 如果确定它是 DateTime 类型
+                string LCommitDT = dateTime.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
                 // 异步下载文件，并更新下载进度
                 await DownloadFileAsync(ProxyUrl,
                                        destinationPath,
@@ -92,10 +96,13 @@ namespace Pixiv_Nginx_GUI
                 }
                 // 更新UI，表示文件解压完成
                 UnzipText.Text = "文件解压完成！";
+                // 替换所有 CA
+                File.Copy(CERFile, OldCERFile, overwrite: true);
+                File.Copy(CRTFile, OldCRTFile, overwrite: true);
+                File.Copy(KeyFile, OldKeyFile, overwrite: true);
                 // 记录部署完成时的新版本号
-                NewVersion = DateTime.Parse(LCommitDT).ToString();
+                NewVersion = LCommitDT;
                 // 启用下一步按钮，允许用户继续操作
-                // 下载成功后不需要重新启用重试以及从本地文件安装按钮防止误导（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
                 NextBtn.IsEnabled = true;
             }
             catch (OperationCanceledException)
@@ -135,9 +142,9 @@ namespace Pixiv_Nginx_GUI
             // 获取证书存储中的所有证书
             X509Certificate2Collection collection = store.Certificates;
             // 指定要查找的证书的指纹（一个唯一的标识符）
-            string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+            string Thumbprint = "BF19E93137660E4A517DDBF4DDC015CDC8760E37";
             // 在证书存储中查找具有指定指纹的证书
-            // X509FindType.FindByThumbprint表示按指纹查找，false表示不区分大小写（对于指纹查找无效，因为指纹是唯一的）
+            // X509FindType.FindByThumbprint 表示按指纹查找，false 表示不区分大小写（对于指纹查找无效，因为指纹是唯一的）
             X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
             try
             {
@@ -257,7 +264,7 @@ namespace Pixiv_Nginx_GUI
                 if (HandyControl.Controls.MessageBox.Show("完成向导后，将无法通过“取消部署”按钮回退所有修改，继续吗？", "完成向导", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
                 {
                     // 将记录的新版本写入配置
-                    ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", DateTime.Parse(NewVersion).ToString(), INIPath);
+                    ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", NewVersion, INIPath);
                     // 检测 data\pixiv-nginx.old 是否存在
                     if (Directory.Exists(OldNginxDirectory))
                     {
@@ -280,7 +287,7 @@ namespace Pixiv_Nginx_GUI
             {
                 store.Open(OpenFlags.MaxAllowed);
                 X509Certificate2Collection collection = store.Certificates;
-                string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+                string Thumbprint = "BF19E93137660E4A517DDBF4DDC015CDC8760E37";
                 X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
                 if (PreviousCERState == false && fcollection.Count > 0)
                 {
@@ -363,6 +370,9 @@ namespace Pixiv_Nginx_GUI
                     // 不存在则直接复制 hosts 文件
                     File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
                 }
+                // 某站的支持
+                WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "nyaa.si");
+                WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "sukebei.nyaa.si");
                 // 刷新 DNS 缓存
                 Flushdns();
                 // 启用下一步按钮并禁用替换与追加按钮
@@ -393,6 +403,9 @@ namespace Pixiv_Nginx_GUI
                 File.Delete("C:\\Windows\\System32\\drivers\\etc\\hosts");
                 // 复制 hosts 文件
                 File.Copy(hostsFile, "C:\\Windows\\System32\\drivers\\etc\\hosts", true);
+                // 某站的支持
+                WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts","127.0.0.1","nyaa.si");
+                WriteHosts.AppendSingleRecord("C:\\Windows\\System32\\drivers\\etc\\hosts", "127.0.0.1", "sukebei.nyaa.si");
                 // 刷新 DNS 缓存
                 Flushdns();
                 // 启用下一步按钮并禁用替换与追加按钮
@@ -420,7 +433,7 @@ namespace Pixiv_Nginx_GUI
             // 获取证书存储中的所有证书
             X509Certificate2Collection collection = store.Certificates;
             // 指定要查找的证书的指纹（一个唯一的标识符）
-            string Thumbprint = "8D8A94C32FAA48EBAFA56490B0031D82279D1AF9";
+            string Thumbprint = "BF19E93137660E4A517DDBF4DDC015CDC8760E37";
             // 在证书存储中查找具有指定指纹的证书
             X509Certificate2Collection fcollection = collection.Find(X509FindType.FindByThumbprint, Thumbprint, false);
             // 记录先前证书安装状态以方便回退修改
@@ -467,7 +480,10 @@ namespace Pixiv_Nginx_GUI
                 string CommitInfo = await GetAsync(CommitInfoURL);
                 JObject commitdata = JObject.Parse(CommitInfo);
                 // 获取提交的日期时间（GMT）
-                string LCommitDT = commitdata["committer"]["date"].ToString();
+                // 注意：dateToken 所返回的格式受系统设置影响，这里需要转换为标准格式（https://github.com/racpast/Pixiv-Nginx-GUI/issues/1）
+                JToken dateToken = commitdata["committer"]["date"];
+                DateTime dateTime = dateToken.ToObject<DateTime>(); // 或者使用 (DateTime)dateToken 如果确定它是 DateTime 类型
+                string LCommitDT = dateTime.ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
                 // 获取用户选择的ZIP文件路径
                 string filePath = openFileDialog.FileName;
                 // 创建一个输入框对话框，提示用户输入提交日期
@@ -509,6 +525,10 @@ namespace Pixiv_Nginx_GUI
                         }
                         // 更新解压状态
                         UnzipText.Text = "文件解压完成！";
+                        // 替换所有 CA
+                        File.Copy(CERFile, OldCERFile, overwrite: true);
+                        File.Copy(CRTFile, OldCRTFile, overwrite: true);
+                        File.Copy(KeyFile, OldKeyFile, overwrite: true);
                         // 更新新版本信息
                         NewVersion = DateTime.Parse(inputBox.InputText).ToString();
                         // 重新启用下一步按钮

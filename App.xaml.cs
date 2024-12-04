@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
 
 namespace Pixiv_Nginx_GUI
 {
