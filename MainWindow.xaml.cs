@@ -578,6 +578,8 @@ namespace Pixiv_Nginx_GUI
                 UpdateLogTb.Text += $"解压新版本压缩包完成！\r\n";
                 // 将新的版本号写入应用程序设置并保存
                 ConfigINI.INIWrite("程序信息", "CurrentVersionCommitDate", NewVersion, INIPath);
+                UpdateInfo();
+                VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
                 // 显示当前 Pixiv-Nginx 版本的提交日期
                 VersionInfo.Text = "当前 Pixiv-Nginx 版本 Commit 时间(GMT)：\r\n" + CurrentVersionCommitDate;
                 // 弹出窗口提示更新完成
