@@ -15,9 +15,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg4.jpg" Opacity="1"/>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg6.png" Opacity="1" TileMode="None"/>
         </Grid.Background>
-        <Border Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
+        <Border x:Name="TopBar" Margin="20,20,20,10" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="20,20,20,20">
             <Border.BorderBrush>
                 <LinearGradientBrush EndPoint="1,0">
                     <GradientStop Color="#FFCE00FF"/>
@@ -103,7 +103,7 @@
             </Border.BorderBrush>
             <Grid>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock x:Name="DownloadText" Margin="50,20,50,10" TextWrapping="Wrap" Text="下载文件" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
+                    <TextBlock x:Name="DownloadText" Margin="50,20,50,10" TextWrapping="Wrap" Text="发送请求..." TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush EndPoint="1,0">
                                 <GradientStop Color="#FF2CF0FF"/>
@@ -150,7 +150,7 @@
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                     </TextBlock>
-                    <Image Source="/CerWarn.png" Stretch="UniformToFill" Width="600"/>
+                    <Image Source="/CerWarnWin.png" Stretch="UniformToFill" Width="600"/>
                     <TextBlock Margin="50,10,50,10" TextWrapping="Wrap" Text="注意：如果遇到浏览器显示网站不可信任，这时即使你点了信任，网页内的图片等内容还是可能被浏览器阻止，最好的解决办法是保证证书安装成功。" TextAlignment="Center" FontSize="30" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush EndPoint="1,0">

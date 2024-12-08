@@ -135,6 +135,7 @@
     <Compile Include="InputBox.xaml.cs">
       <DependentUpon>InputBox.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LogHelper.cs" />
     <Compile Include="PublicHelper.cs" />
     <Page Include="FirstUse.xaml">
       <SubType>Designer</SubType>
@@ -205,19 +206,19 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="CerWarn.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="nginxwarn.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Bkg3.jpg" />
+    <Resource Include="CerWarnWin.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Bkg4.jpg" />
+    <Resource Include="Bkg6.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Bkg5.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

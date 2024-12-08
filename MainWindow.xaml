@@ -14,9 +14,9 @@
             <RowDefinition />
         </Grid.RowDefinitions>
         <Grid.Background>
-            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg3.jpg"/>
+            <ImageBrush Stretch="UniformToFill" ImageSource="/Bkg5.png"/>
         </Grid.Background>
-        <Border Grid.Row="0" Margin="20,10,20,0"  Background="#70FFFFFF" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="5,5,5,5">
+        <Border x:Name="TopBar" Grid.Row="0" Margin="20,10,20,0"  Background="#70FFFFFF" BorderThickness="1.5,1.5,1.5,1.5" CornerRadius="5,5,5,5">
             <Border.BorderBrush>
                 <LinearGradientBrush EndPoint="1,0">
                     <GradientStop Color="#FFCE00FF"/>
@@ -26,6 +26,9 @@
             <TextBlock Margin="5" x:Name="WindowTitle" TextWrapping="Wrap" Text="Pixiv-Nginx 部署工具" FontSize="21" Foreground="#FF00FFE2" FontFamily="{StaticResource AaManYuShouXieTi}" FontWeight="Bold" TextAlignment="Center"/>
         </Border>
         <Grid Grid.Row="1">
+            <Grid.Background>
+                <ImageBrush/>
+            </Grid.Background>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -35,6 +38,11 @@
                     <Paragraph TextAlignment="Center">
                         <Span FontSize="25" Foreground="#FFCE00FF">
                             <Run Text="说 明" FontWeight="Bold" />
+                        </Span>
+                    </Paragraph>
+                    <Paragraph TextAlignment="Left">
+                        <Span FontSize="18" Foreground="#FF1C65DC">
+                            <Run Text="部署过程中遇到任何问题请加群：946813204" />
                         </Span>
                     </Paragraph>
                     <Paragraph TextAlignment="Left">
@@ -100,6 +108,7 @@
                                 <Button x:Name="DelStartBtn" Height="30" Grid.Column="1" Click="DelStartBtn_Click" Margin="5,0,10,10" HorizontalAlignment="Stretch" Content="停止开机自动启动"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFB724FF" BorderBrush="#FFB724FF" VerticalContentAlignment="Center"/>
                             </Grid>
                             <Button x:Name="ExitBtn" Click="ExitBtn_Click" Height="30" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="退出工具"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FFFF3C3C" BorderBrush="#FFFF3C3C" VerticalContentAlignment="Center"/>
+                            <Button x:Name="ReloadHostsBtn" Height="30" Grid.Column="1" Click="ReloadHostsBtn_Click" Margin="10,0,10,10" HorizontalAlignment="Stretch" Content="重新加载 hosts 至系统"  Background="#70FFFFFF" FontWeight="Bold" FontSize="17" FontFamily="{StaticResource AaManYuShouXieTi}" Foreground="#FF00D43E" BorderBrush="#FF00D43E" VerticalContentAlignment="Center"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
