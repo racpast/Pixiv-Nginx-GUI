@@ -24,5 +24,5 @@ https://github.com/user-attachments/assets/cb6294aa-7c18-4ef7-b13c-2c462dcfe455
 ### 🧹 Nginx 日志清理
 ![image](https://github.com/user-attachments/assets/8e4d1a2c-871d-45a6-8ff2-9b611c0a533d)
 ## 🧪 任何 Bug 或建议请提交至 issue 或发送邮件至 yaojun.mail@qq.com 。
-## 🎥 哔哩哔哩：[【Pixiv】P站免科学直连](https://www.bilibili.com/video/BV1yZz4YxEBR)
+## 🎥 哔哩哔哩：[【免科学】Pixiv直连（最新可用）](https://www.bilibili.com/video/BV1sAqKYdE5o)
 ## 👥 QQ 交流群：946813204([Pixiv-Nginx-GUI](https://github.com/racpast/Pixiv-Nginx-GUI) 交流群)。
