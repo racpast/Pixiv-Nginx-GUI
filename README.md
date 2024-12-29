@@ -1,3 +1,4 @@
+# 注意：`本项目现已被适用范围更广、使用体验更好的项目` [SNIBypassGUI](https://github.com/racpast/SNIBypassGUI) `替代，请前往此仓库获取最新信息！`
 # Pixiv-Nginx-GUI
 ## 📝 简介
 这是按照 https://2heng.xin/2017/09/19/pixiv/ 中的步骤制作的 [Pixiv-Nginx](https://github.com/mashirozx/Pixiv-Nginx) 的**自动化配置**程序，
